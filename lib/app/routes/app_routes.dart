@@ -9,6 +9,7 @@ import '../../screens/attendance_history_screen.dart';
 import '../../screens/reports_screen.dart';
 import '../../screens/profile_screen.dart';
 import '../../screens/settings_screen.dart';
+import '../../screens/qr_scanner_screen.dart';  // ✅ Add this
 
 class AppRoutes {
   static const splash = '/splash';
@@ -20,6 +21,7 @@ class AppRoutes {
   static const reports = '/reports';
   static const profile = '/profile';
   static const settings = '/settings';
+  static const qrScanner = '/qr-scanner';  // ✅ Add this
 
   static final routes = [
     GetPage(name: splash, page: () => const SplashScreen()),
@@ -31,5 +33,7 @@ class AppRoutes {
     GetPage(name: reports, page: () => ReportsScreen()),
     GetPage(name: profile, page: () => ProfileScreen()),
     GetPage(name: settings, page: () => SettingsScreen()),
+    GetPage(name: qrScanner, page: () => QRScannerScreen()),  // ✅ Add this
+
   ];
 }

@@ -29,53 +29,53 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       drawer: _buildDrawer(),
-      body: RefreshIndicator(
-        onRefresh: dashboardController.fetchDashboardData,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome Card
-              _buildWelcomeCard(),
-              const SizedBox(height: 20),
-              
-              // Stats Cards
-              const Text(
-                'Today\'s Overview',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: dashboardController.fetchDashboardData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildWelcomeCard(),
+                const SizedBox(height: 20),
+                
+                const Text(
+                  'Today\'s Overview',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildStatsGrid(),
-              const SizedBox(height: 24),
-              
-              // Quick Actions
-              const Text(
-                'Quick Actions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 12),
+                _buildStatsGrid(),
+                const SizedBox(height: 24),
+                
+                const Text(
+                  'Quick Actions',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildQuickActions(),
-              const SizedBox(height: 24),
-              
-              // Recent Activity
-              const Text(
-                'Recent Activity',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 12),
+                _buildQuickActions(),
+                const SizedBox(height: 24),
+                
+                const Text(
+                  'Recent Activity',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildRecentActivity(),
-            ],
+                const SizedBox(height: 12),
+                _buildRecentActivity(),
+                
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -124,37 +124,50 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildStatsGrid() {
-    return Obx(() => GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.3,
+    return Obx(() => Column(
       children: [
-        _buildStatCard(
-          'Total Students',
-          dashboardController.totalStudents.value.toString(),
-          Icons.people,
-          Colors.blue,
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                'Total Students',
+                dashboardController.totalStudents.value.toString(),
+                Icons.people,
+                Colors.blue,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                'Present Today',
+                dashboardController.presentToday.value.toString(),
+                Icons.check_circle,
+                AppTheme.successColor,
+              ),
+            ),
+          ],
         ),
-        _buildStatCard(
-          'Present Today',
-          dashboardController.presentToday.value.toString(),
-          Icons.check_circle,
-          AppTheme.successColor,
-        ),
-        _buildStatCard(
-          'Absent Today',
-          dashboardController.absentToday.value.toString(),
-          Icons.cancel,
-          AppTheme.errorColor,
-        ),
-        _buildStatCard(
-          'Attendance %',
-          '${dashboardController.attendancePercentage.value}%',
-          Icons.pie_chart,
-          AppTheme.warningColor,
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                'Absent Today',
+                dashboardController.absentToday.value.toString(),
+                Icons.cancel,
+                AppTheme.errorColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                'Attendance %',
+                '${dashboardController.attendancePercentage.value}%',
+                Icons.pie_chart,
+                AppTheme.warningColor,
+              ),
+            ),
+          ],
         ),
       ],
     ));
@@ -163,10 +176,10 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(8),
@@ -174,26 +187,25 @@ class DashboardScreen extends StatelessWidget {
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: color),
+              child: Icon(icon, color: color, size: 20),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[600],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -201,12 +213,22 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  // ✅ FIXED: Equal size boxes with fixed height
   Widget _buildQuickActions() {
     return Row(
       children: [
         Expanded(
           child: _buildActionCard(
-            'Mark Attendance',
+            'QR Scanner',
+            Icons.qr_code_scanner,
+            AppTheme.primaryColor,
+            () => Get.toNamed(AppRoutes.qrScanner),  // ✅ Navigate to QR Scanner
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildActionCard(
+            'Attendance',
             Icons.how_to_reg,
             AppTheme.primaryColor,
             () => Get.toNamed(AppRoutes.markAttendance),
@@ -215,7 +237,7 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _buildActionCard(
-            'View Students',
+            'Students',
             Icons.people_outline,
             AppTheme.secondaryColor,
             () => Get.toNamed(AppRoutes.students),
@@ -226,46 +248,54 @@ class DashboardScreen extends StatelessWidget {
           child: _buildActionCard(
             'Reports',
             Icons.assessment,
-            AppTheme.warningColor,
-            () => Get.toNamed(AppRoutes.reports),
+            AppTheme.secondaryColor,
+            () => Get.toNamed(AppRoutes.students),
           ),
         ),
       ],
     );
   }
 
+  // ✅ FIXED: Equal size with SizedBox height
   Widget _buildActionCard(
     String title,
     IconData icon,
     Color color,
     VoidCallback onTap,
   ) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+    return SizedBox(
+      height: 100,  // ✅ Fixed height
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Card(
+          margin: EdgeInsets.zero,  // ✅ Remove default margin
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,  // ✅ Center content
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 24),
                 ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -274,31 +304,44 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildRecentActivity() {
     return Card(
-      child: Column(
-        children: List.generate(
-          5,
-          (index) => ListTile(
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 5,
+        separatorBuilder: (context, index) => Divider(
+          height: 1,
+          color: Colors.grey[200],
+        ),
+        itemBuilder: (context, index) {
+          final isPresent = index % 2 == 0;
+          return ListTile(
+            dense: true,
+            visualDensity: VisualDensity.compact,
             leading: CircleAvatar(
-              backgroundColor: index % 2 == 0
+              radius: 18,
+              backgroundColor: isPresent
                   ? AppTheme.successColor.withOpacity(0.1)
                   : AppTheme.errorColor.withOpacity(0.1),
               child: Icon(
-                index % 2 == 0 ? Icons.check : Icons.close,
-                color: index % 2 == 0
-                    ? AppTheme.successColor
-                    : AppTheme.errorColor,
+                isPresent ? Icons.check : Icons.close,
+                color: isPresent ? AppTheme.successColor : AppTheme.errorColor,
+                size: 18,
               ),
             ),
-            title: Text('Student ${index + 1}'),
+            title: Text(
+              'Student ${index + 1}',
+              style: const TextStyle(fontSize: 14),
+            ),
             subtitle: Text(
-              index % 2 == 0 ? 'Marked Present' : 'Marked Absent',
+              isPresent ? 'Marked Present' : 'Marked Absent',
+              style: const TextStyle(fontSize: 12),
             ),
             trailing: Text(
               '${index + 1}m ago',
-              style: TextStyle(color: Colors.grey[500], fontSize: 12),
+              style: TextStyle(color: Colors.grey[500], fontSize: 11),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
