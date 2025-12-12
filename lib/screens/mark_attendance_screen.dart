@@ -167,8 +167,8 @@ class MarkAttendanceScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return StudentCard(
                     student: controller.students[index],
-                    showAttendanceToggle: true,
-                    onAttendanceToggle: () => controller.toggleAttendance(index),
+                    // showAttendanceToggle: true,
+                    // onAttendanceToggle: () => controller.toggleAttendance(index),
                   );
                 },
               );

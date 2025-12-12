@@ -42,7 +42,7 @@ class LoginScreen extends StatelessWidget {
                 // Title
                 const Center(
                   child: Text(
-                    'Welcome Back!',
+                    'Umang Academy',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

@@ -22,10 +22,10 @@ class AttendanceTile extends StatelessWidget {
         return AppTheme.warningColor;
       case AttendanceStatus.excused:
         return Colors.blue;
-      case AttendanceStatus.holiday:
-        return Colors.purple;
-      case AttendanceStatus.halfDay:
-        return Colors.orange;
+      // case AttendanceStatus.holiday:
+        // return Colors.purple;
+      // case AttendanceStatus.halfDay:
+        // return Colors.orange;
     }
   }
 
@@ -40,10 +40,10 @@ class AttendanceTile extends StatelessWidget {
         return Icons.access_time;
       case AttendanceStatus.excused:
         return Icons.info;
-      case AttendanceStatus.holiday:
-        return Icons.celebration;
-      case AttendanceStatus.halfDay:
-        return Icons.timelapse;
+      // case AttendanceStatus.holiday:
+      //   return Icons.celebration;
+      // case AttendanceStatus.halfDay:
+      //   return Icons.timelapse;
     }
   }
 
@@ -60,7 +60,8 @@ class AttendanceTile extends StatelessWidget {
           ),
         ),
         title: Text(
-          attendance.studentName,
+          "${attendance.studentName}",
+          // attendance.studentName,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text('Date: ${attendance.formattedDate}'),

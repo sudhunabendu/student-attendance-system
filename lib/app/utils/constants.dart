@@ -10,7 +10,21 @@ class ApiConstants {
   static const String profile = '/user/profile';
   static const String students = '/students';
   static const String attendance = '/attendance';
-  
+  static const String markAttendance = '/auth/mark-attendance';
+  static const String refreshToken = '/auth/refresh';
+  static const String getAttendance = '/attendance';
+  static const String getTodayAttendance = '/auth/get-today-attendance';
+  static const String getAttendanceHistory = '/attendance/history';
+  static const String getAttendanceStats = '/attendance/stats';
+  static const String getStudentsByClass = '/attendance/students';
+  static const String searchStudents = '/attendance/students';
+  static const String getClasses = '/attendance/students';
+  static const String getSections = '/attendance/students';
+  static const String getStudentAttendance = '/attendance/students';
+
+    // Student Endpoints
+  static const String getStudents = '/students';
+  static const String getStudentsForAttendance = '/students/for-attendance';
   // Headers
   static Map<String, String> headers = {
     'Content-Type': 'application/json',

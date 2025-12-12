@@ -23,11 +23,7 @@ class ApiService {
           : ApiConstants.headers;
 
       final response = await http
-          .post(
-            url,
-            headers: headers,
-            body: jsonEncode(body),
-          )
+          .post(url, headers: headers, body: jsonEncode(body))
           .timeout(const Duration(seconds: 30));
 
       return _handleResponse(response);
@@ -46,7 +42,7 @@ class ApiService {
   }) async {
     try {
       var url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
-      
+
       if (queryParams != null) {
         url = url.replace(queryParameters: queryParams);
       }
@@ -82,11 +78,7 @@ class ApiService {
           : ApiConstants.headers;
 
       final response = await http
-          .put(
-            url,
-            headers: headers,
-            body: jsonEncode(body),
-          )
+          .put(url, headers: headers, body: jsonEncode(body))
           .timeout(const Duration(seconds: 30));
 
       return _handleResponse(response);
@@ -128,7 +120,7 @@ class ApiService {
   Map<String, dynamic> _handleResponse(http.Response response) {
     try {
       final body = jsonDecode(response.body);
-      
+
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return body;
       } else {
