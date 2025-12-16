@@ -7,9 +7,9 @@ class AttendanceTile extends StatelessWidget {
   final AttendanceModel attendance;
 
   const AttendanceTile({
-    Key? key,
+    super.key,
     required this.attendance,
-  }) : super(key: key);
+  });
 
   Color _getStatusColor() {
     // ✅ FIXED: Using enum instead of string comparison

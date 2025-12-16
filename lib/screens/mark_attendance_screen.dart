@@ -7,7 +7,7 @@ import '../widgets/custom_button.dart';
 import '../app/theme/app_theme.dart';
 
 class MarkAttendanceScreen extends StatelessWidget {
-  MarkAttendanceScreen({Key? key}) : super(key: key);
+  MarkAttendanceScreen({super.key});
 
   final AttendanceController controller = Get.find<AttendanceController>();
 

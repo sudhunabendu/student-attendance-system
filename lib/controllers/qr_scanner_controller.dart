@@ -1,463 +1,4 @@
 // lib/controllers/qr_scanner_controller.dart
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:mobile_scanner/mobile_scanner.dart';
-// import 'package:vibration/vibration.dart';
-// import '../models/student_model.dart';
-// import '../models/attendance_model.dart';
-// import '../app/theme/app_theme.dart';
-
-// class QRScannerController extends GetxController {
-//   // Scanner state
-//   final isScanning = true.obs;
-//   final isFlashOn = false.obs;
-//   final isFrontCamera = false.obs;
-//   final isProcessing = false.obs;
-//   final hasError = false.obs;
-//   final errorMessage = ''.obs;
-  
-//   // Scanned students
-//   final scannedStudents = <StudentModel>[].obs;
-//   final todayAttendance = <AttendanceModel>[].obs;
-  
-//   // Selected date
-//   final selectedDate = DateTime.now().obs;
-  
-//   // All students (mock data)
-//   final allStudents = <StudentModel>[].obs;
-  
-//   // Scanner controller
-//   MobileScannerController? scannerController;
-  
-//   // Last scanned code (to prevent duplicates)
-//   String? lastScannedCode;
-//   DateTime? lastScanTime;
-
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     loadStudents();
-//     initScanner();
-//   }
-
-//   @override
-//   void onClose() {
-//     scannerController?.dispose();
-//     super.onClose();
-//   }
-
-//   // Initialize scanner
-//   void initScanner() {
-//     try {
-//       scannerController = MobileScannerController(
-//         facing: CameraFacing.back,
-//         torchEnabled: false,
-//         detectionSpeed: DetectionSpeed.normal,
-//         detectionTimeoutMs: 1000,
-//       );
-//       hasError.value = false;
-//     } catch (e) {
-//       hasError.value = true;
-//       errorMessage.value = 'Failed to initialize camera: $e';
-//     }
-//   }
-
-//   // Load mock students
-//   void loadStudents() {
-//     allStudents.value = List.generate(
-//       50,
-//       (index) => StudentModel(
-//         id: 'STU${(index + 1).toString().padLeft(3, '0')}',
-//         name: 'Student ${index + 1}',
-//         firstName: 'First${index + 1}',
-//         lastName: 'Last${index + 1}',
-//         rollNumber: '2024${(index + 1).toString().padLeft(3, '0')}',
-//         className: ['10th', '11th', '12th'][index % 3],
-//         section: ['A', 'B', 'C', 'D'][index % 4],
-//         isPresent: false,
-//       ),
-//     );
-//   }
-
-//   // Handle barcode detection
-//   void onBarcodeDetected(BarcodeCapture capture) {
-//     final List<Barcode> barcodes = capture.barcodes;
-    
-//     for (final barcode in barcodes) {
-//       if (barcode.rawValue != null && !isProcessing.value) {
-//         processQRCode(barcode.rawValue!);
-//         break;
-//       }
-//     }
-//   }
-
-//   // Handle scanner error
-//   void onScannerError(MobileScannerException error, StackTrace? stackTrace) {
-//     hasError.value = true;
-//     errorMessage.value = 'Camera error: ${error.errorCode.name}';
-//   }
-
-//   // Process scanned QR code
-//   Future<void> processQRCode(String code) async {
-//     // Prevent duplicate scans within 2 seconds
-//     final now = DateTime.now();
-//     if (lastScannedCode == code && 
-//         lastScanTime != null && 
-//         now.difference(lastScanTime!).inSeconds < 2) {
-//       return;
-//     }
-    
-//     lastScannedCode = code;
-//     lastScanTime = now;
-//     isProcessing.value = true;
-    
-//     try {
-//       // Parse QR code data
-//       final qrData = StudentModel.parseQRData(code);
-      
-//       if (qrData == null) {
-//         _showError('Invalid QR Code', 'This QR code is not valid for attendance.');
-//         isProcessing.value = false;
-//         return;
-//       }
-      
-//       // Find student
-//       final student = allStudents.firstWhereOrNull(
-//         (s) => s.id == qrData.id || s.rollNumber == qrData.rollNumber,
-//       );
-      
-//       if (student == null) {
-//         _showError('Student Not Found', 'No student found with this QR code.');
-//         isProcessing.value = false;
-//         return;
-//       }
-      
-//       // Check if already scanned today
-//       final alreadyScanned = scannedStudents.any((s) => s.id == student.id);
-      
-//       if (alreadyScanned) {
-//         _showWarning('Already Marked', '${student.name} is already marked present today.');
-//         isProcessing.value = false;
-//         return;
-//       }
-      
-//       // Mark attendance
-//       await markAttendance(student);
-      
-//     } catch (e) {
-//       _showError('Error', 'Failed to process QR code: $e');
-//     }
-    
-//     isProcessing.value = false;
-//   }
-
-//   // Mark attendance for student
-//   Future<void> markAttendance(StudentModel student) async {
-//     // Vibrate for feedback
-//     try {
-//       if (await Vibration.hasVibrator() ?? false) {
-//         Vibration.vibrate(duration: 200);
-//       }
-//     } catch (e) {
-//       // Ignore vibration errors
-//     }
-    
-//     // Update student status
-//     final updatedStudent = student.copyWith(
-//       isPresent: true,
-//       attendanceStatus: 'present',
-//     );
-    
-//     // Add to scanned list
-//     scannedStudents.add(updatedStudent);
-    
-//     // Create attendance record
-//     final attendance = AttendanceModel(
-//       id: 'ATT${DateTime.now().millisecondsSinceEpoch}',
-//       studentId: student.id,
-//       studentName: student.name,
-//       studentRollNumber: student.rollNumber,
-//       studentClass: student.className,
-//       studentSection: student.section,
-//       date: _formatDate(selectedDate.value),
-//       status: AttendanceStatus.present,
-//       markedBy: 'QR_SCANNER',
-//       markedByName: 'Auto - QR Scan',
-//       markedAt: DateTime.now(),
-//       checkInTime: TimeOfDay.now(),
-//     );
-    
-//     todayAttendance.add(attendance);
-    
-//     // Update in all students list
-//     final index = allStudents.indexWhere((s) => s.id == student.id);
-//     if (index != -1) {
-//       allStudents[index] = updatedStudent;
-//     }
-    
-//     // Show success message
-//     _showSuccess(student.name);
-//   }
-
-//   // Toggle flash
-//   Future<void> toggleFlash() async {
-//     try {
-//       await scannerController?.toggleTorch();
-//       isFlashOn.value = !isFlashOn.value;
-//     } catch (e) {
-//       _showError('Error', 'Failed to toggle flash');
-//     }
-//   }
-
-//   // Toggle camera
-//   Future<void> toggleCamera() async {
-//     try {
-//       await scannerController?.switchCamera();
-//       isFrontCamera.value = !isFrontCamera.value;
-//     } catch (e) {
-//       _showError('Error', 'Failed to switch camera');
-//     }
-//   }
-
-//   // Pause/Resume scanning
-//   void toggleScanning() {
-//     try {
-//       if (isScanning.value) {
-//         scannerController?.stop();
-//       } else {
-//         scannerController?.start();
-//       }
-//       isScanning.value = !isScanning.value;
-//     } catch (e) {
-//       _showError('Error', 'Failed to toggle scanning');
-//     }
-//   }
-
-//   // Restart scanner
-//   void restartScanner() {
-//     scannerController?.dispose();
-//     initScanner();
-//     hasError.value = false;
-//   }
-
-//   // Clear today's scanned students
-//   void clearScannedStudents() {
-//     Get.dialog(
-//       AlertDialog(
-//         title: const Text('Clear All'),
-//         content: const Text('Are you sure you want to clear all scanned students?'),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Get.back(),
-//             child: const Text('Cancel'),
-//           ),
-//           ElevatedButton(
-//             onPressed: () {
-//               scannedStudents.clear();
-//               todayAttendance.clear();
-              
-//               for (int i = 0; i < allStudents.length; i++) {
-//                 allStudents[i] = allStudents[i].copyWith(
-//                   isPresent: false,
-//                   attendanceStatus: 'absent',
-//                 );
-//               }
-              
-//               Get.back();
-//               Get.snackbar(
-//                 'Cleared',
-//                 'All scanned students have been cleared.',
-//                 snackPosition: SnackPosition.BOTTOM,
-//                 backgroundColor: Colors.orange,
-//                 colorText: Colors.white,
-//               );
-//             },
-//             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-//             child: const Text('Clear All'),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // Save attendance
-//   Future<void> saveAttendance() async {
-//     if (scannedStudents.isEmpty) {
-//       _showError('No Students', 'Please scan at least one student QR code.');
-//       return;
-//     }
-    
-//     Get.dialog(
-//       AlertDialog(
-//         title: const Text('Save Attendance'),
-//         content: Text('Save attendance for ${scannedStudents.length} students?'),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Get.back(),
-//             child: const Text('Cancel'),
-//           ),
-//           ElevatedButton(
-//             onPressed: () async {
-//               Get.back();
-              
-//               Get.dialog(
-//                 const Center(
-//                   child: Card(
-//                     child: Padding(
-//                       padding: EdgeInsets.all(20),
-//                       child: CircularProgressIndicator(),
-//                     ),
-//                   ),
-//                 ),
-//                 barrierDismissible: false,
-//               );
-              
-//               await Future.delayed(const Duration(seconds: 2));
-              
-//               Get.back();
-              
-//               Get.snackbar(
-//                 'Success',
-//                 'Attendance saved for ${scannedStudents.length} students!',
-//                 snackPosition: SnackPosition.BOTTOM,
-//                 backgroundColor: AppTheme.successColor,
-//                 colorText: Colors.white,
-//                 duration: const Duration(seconds: 3),
-//               );
-              
-//               Get.back();
-//             },
-//             child: const Text('Save'),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // Manual entry
-//   void showManualEntry() {
-//     final TextEditingController rollController = TextEditingController();
-    
-//     Get.dialog(
-//       AlertDialog(
-//         title: const Text('Manual Entry'),
-//         content: TextField(
-//           controller: rollController,
-//           decoration: const InputDecoration(
-//             labelText: 'Roll Number',
-//             hintText: 'Enter student roll number',
-//             prefixIcon: Icon(Icons.numbers),
-//             border: OutlineInputBorder(),
-//           ),
-//           keyboardType: TextInputType.text,
-//           autofocus: true,
-//         ),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Get.back(),
-//             child: const Text('Cancel'),
-//           ),
-//           ElevatedButton(
-//             onPressed: () {
-//               final rollNumber = rollController.text.trim();
-//               if (rollNumber.isEmpty) return;
-              
-//               final student = allStudents.firstWhereOrNull(
-//                 (s) => s.rollNumber.toLowerCase() == rollNumber.toLowerCase(),
-//               );
-              
-//               if (student == null) {
-//                 Get.back();
-//                 _showError('Not Found', 'No student found with roll number: $rollNumber');
-//                 return;
-//               }
-              
-//               final alreadyScanned = scannedStudents.any((s) => s.id == student.id);
-//               if (alreadyScanned) {
-//                 Get.back();
-//                 _showWarning('Already Marked', '${student.name} is already marked present.');
-//                 return;
-//               }
-              
-//               Get.back();
-//               markAttendance(student);
-//             },
-//             child: const Text('Add'),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // Remove student from scanned list
-//   void removeStudent(String studentId) {
-//     scannedStudents.removeWhere((s) => s.id == studentId);
-//     todayAttendance.removeWhere((a) => a.studentId == studentId);
-    
-//     final index = allStudents.indexWhere((s) => s.id == studentId);
-//     if (index != -1) {
-//       allStudents[index] = allStudents[index].copyWith(
-//         isPresent: false,
-//         attendanceStatus: 'absent',
-//       );
-//     }
-//   }
-
-//   // Helper methods
-//   String _formatDate(DateTime date) {
-//     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-//   }
-
-//   void _showSuccess(String studentName) {
-//     Get.snackbar(
-//       '✓ Present',
-//       '$studentName marked present!',
-//       snackPosition: SnackPosition.TOP,
-//       backgroundColor: AppTheme.successColor,
-//       colorText: Colors.white,
-//       duration: const Duration(seconds: 2),
-//       margin: const EdgeInsets.all(16),
-//       borderRadius: 12,
-//       icon: const Icon(Icons.check_circle, color: Colors.white),
-//     );
-//   }
-
-//   void _showError(String title, String message) {
-//     Get.snackbar(
-//       title,
-//       message,
-//       snackPosition: SnackPosition.TOP,
-//       backgroundColor: AppTheme.errorColor,
-//       colorText: Colors.white,
-//       duration: const Duration(seconds: 3),
-//       margin: const EdgeInsets.all(16),
-//       borderRadius: 12,
-//       icon: const Icon(Icons.error, color: Colors.white),
-//     );
-//   }
-
-//   void _showWarning(String title, String message) {
-//     Get.snackbar(
-//       title,
-//       message,
-//       snackPosition: SnackPosition.TOP,
-//       backgroundColor: AppTheme.warningColor,
-//       colorText: Colors.white,
-//       duration: const Duration(seconds: 2),
-//       margin: const EdgeInsets.all(16),
-//       borderRadius: 12,
-//       icon: const Icon(Icons.warning, color: Colors.white),
-//     );
-//   }
-
-//   // Stats
-//   int get presentCount => scannedStudents.length;
-//   int get totalStudents => allStudents.length;
-//   double get attendancePercentage => 
-//       totalStudents > 0 ? (presentCount / totalStudents) * 100 : 0;
-// }
-
-// lib/controllers/qr_scanner_controller.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -466,7 +7,9 @@ import '../models/student_model.dart';
 import '../models/attendance_model.dart';
 import '../services/attendance_service.dart';
 import '../services/storage_service.dart';
+import '../services/student_service.dart';
 import '../app/theme/app_theme.dart';
+import '../app/utils/qr_helper.dart';
 
 class QRScannerController extends GetxController {
   // ══════════════════════════════════════════════════════════
@@ -484,6 +27,12 @@ class QRScannerController extends GetxController {
   final isSaving = false.obs;
   final hasError = false.obs;
   final errorMessage = ''.obs;
+  
+  // ══════════════════════════════════════════════════════════
+  // LOADING STATES
+  // ══════════════════════════════════════════════════════════
+  final isLoadingStudents = false.obs;
+  final studentsLoadError = ''.obs;
 
   // ══════════════════════════════════════════════════════════
   // DATA
@@ -509,10 +58,11 @@ class QRScannerController extends GetxController {
   // GETTERS
   // ══════════════════════════════════════════════════════════
   String? get _authToken => _storageService.getToken();
-  bool get isAuthenticated => _authToken != null && _authToken!.isNotEmpty;
+  // bool get isAuthenticated => _authToken != null && _authToken!.isNotEmpty;
 
   int get presentCount => scannedStudents.length;
   int get totalStudents => allStudents.length;
+
   double get attendancePercentage =>
       totalStudents > 0 ? (presentCount / totalStudents) * 100 : 0;
 
@@ -546,11 +96,16 @@ class QRScannerController extends GetxController {
   }
 
   Future<void> _initController() async {
-    loadStudents();
     initScanner();
-    if (isAuthenticated) {
+    
+    
+      // Load students from API
+      await loadStudentsFromAPI();
       await fetchTodayAttendance();
-    }
+    
+      // Fallback to mock data if not authenticated
+      _loadMockStudents();
+    
   }
 
   // ══════════════════════════════════════════════════════════
@@ -569,37 +124,142 @@ class QRScannerController extends GetxController {
     } catch (e) {
       hasError.value = true;
       errorMessage.value = 'Failed to initialize camera: $e';
-      debugPrint('Scanner init error: $e');
+      // debugPrint('Scanner init error: $e');
     }
   }
 
   // ══════════════════════════════════════════════════════════
-  // LOAD STUDENTS (Mock or API)
+  // LOAD STUDENTS FROM API
   // ══════════════════════════════════════════════════════════
-  void loadStudents() {
-    // TODO: Replace with API call
+  Future<void> loadStudentsFromAPI() async {
+  isLoadingStudents.value = true;
+  studentsLoadError.value = '';
+
+  try {
+    // debugPrint('Fetching students from API...');
+    
+    final result = await StudentService.getAllStudents(
+    );
+
+    // debugPrint('Students API Response: success=${result['success']}');
+
+    if (result['success'] == true) {
+      // ✅ Students are already parsed as List<StudentModel>
+      final List<StudentModel> students = result['students'] ?? [];
+      
+      allStudents.value = students;
+
+      // debugPrint('✓ Loaded ${allStudents.length} students from API');
+    } else {
+      studentsLoadError.value = result['message'] ?? 'Failed to load students';
+      // debugPrint('✗ Failed to load students: ${result['message']}');
+      
+      // Fallback to mock data
+      _loadMockStudents();
+    }
+  } catch (e, stackTrace) {
+    // debugPrint('✗ Error loading students: $e');
+    // debugPrint('Stack trace: $stackTrace');
+    studentsLoadError.value = 'Error: $e';
+    
+    // Fallback to mock data
+    _loadMockStudents();
+  } finally {
+    isLoadingStudents.value = false;
+  }
+}
+
+  // ══════════════════════════════════════════════════════════
+  // REFRESH STUDENTS
+  // ══════════════════════════════════════════════════════════
+  Future<void> refreshStudents() async {
+    await loadStudentsFromAPI();
+    
+    if (studentsLoadError.value.isEmpty) {
+      _showInfo('Refreshed', 'Student list updated');
+    } else {
+      _showError('Error', studentsLoadError.value);
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // LOAD MOCK STUDENTS (Fallback)
+  // ══════════════════════════════════════════════════════════
+  void _loadMockStudents() {
+    // debugPrint('Loading mock students as fallback...');
+    
     allStudents.value = List.generate(
       50,
       (index) => StudentModel(
-        id: 'STU${(index + 1).toString().padLeft(3, '0')}',
-        firstName: 'First${index + 1}',
-        lastName: 'Last${index + 1}',
-        rollNumber: '2024${(index + 1).toString().padLeft(3, '0')}',
-        className: ['10th', '11th', '12th'][index % 3],
-        section: ['A', 'B', 'C', 'D'][index % 4],
+        id: 'STU${index + 1}',
+        roleId: 'student',
+        gender: index % 2 == 0 ? 'Male' : 'Female',
+        firstName: 'Student',
+        lastName: '${index + 1}',
+        roleNumber: '${2024}${(index + 1).toString().padLeft(3, '0')}',
+        email: 'student${index + 1}@school.com',
+        mobileCode: '+91',
+        mobileNumber: '98765${(index + 1).toString().padLeft(5, '0')}',
+        mobileNumberVerified: true,
+        status: 'Active',
+        isOtpNeeded: false,
       ),
     );
+    
+    // debugPrint('Loaded ${allStudents.length} mock students');
   }
+
+  // ══════════════════════════════════════════════════════════
+  // FIND STUDENT BY ID (API or Local)
+  // ══════════════════════════════════════════════════════════
+ Future<StudentModel?> findStudentById(String studentId) async {
+  // First, try to find in local list
+  StudentModel? student = allStudents.firstWhereOrNull((s) => s.id == studentId);
+  
+  if (student != null) {
+    // debugPrint('✓ Found student locally: ${student.name}');
+    return student;
+  }
+  
+  // If not found locally, try API
+  try {
+    // debugPrint('Student not found locally, fetching from API...');
+    
+    final result = await StudentService.getStudentById(
+      studentId: studentId,
+    );
+    
+    // debugPrint('API Result: $result');
+    
+    if (result['success'] == true && result['student'] != null) {
+      // ✅ Student is already parsed as StudentModel in the service
+      student = result['student'] as StudentModel;
+      
+      // Add to local list if not already exists
+      if (!allStudents.any((s) => s.id == student!.id)) {
+        allStudents.add(student);
+      }
+      
+      // debugPrint('✓ Found student from API: ${student.name}');
+      return student;
+    } else {
+      // debugPrint('✗ Student not found: ${result['message']}');
+    }
+  } catch (e) {
+    // debugPrint('❌ Error fetching student by ID: $e');
+  }
+  
+  return null;
+}
 
   // ══════════════════════════════════════════════════════════
   // FETCH TODAY'S ATTENDANCE FROM SERVER
   // ══════════════════════════════════════════════════════════
   Future<void> fetchTodayAttendance() async {
-    if (!isAuthenticated) return;
 
     try {
       final result = await AttendanceService.getTodayAttendance(
-        token: _authToken!,
+        // token: _authToken!,
       );
 
       if (result['success'] == true) {
@@ -614,14 +274,14 @@ class QRScannerController extends GetxController {
             final updatedStudent = student.copyWith(
               isPresent: true,
               isMarkedOnServer: true,
-              attendanceStatus: attendance.status.value,
+              attendanceStatus: attendance.status.name,
             );
             scannedStudents.add(updatedStudent);
           }
         }
       }
     } catch (e) {
-      debugPrint('Error fetching today attendance: $e');
+      // debugPrint('Error fetching today attendance: $e');
     }
   }
 
@@ -645,7 +305,7 @@ class QRScannerController extends GetxController {
   void onScannerError(MobileScannerException error, StackTrace? stackTrace) {
     hasError.value = true;
     errorMessage.value = 'Camera error: ${error.errorCode.name}';
-    debugPrint('Scanner error: ${error.errorCode.name}');
+    // debugPrint('Scanner error: ${error.errorCode.name}');
   }
 
   // ══════════════════════════════════════════════════════════
@@ -665,29 +325,32 @@ class QRScannerController extends GetxController {
     isProcessing.value = true;
 
     try {
-      // Parse QR code data
-      final qrData = StudentModel.parseQRData(code);
-      print('Scanned QR Data: $qrData');
+      // debugPrint('Processing QR Code: $code');
+      
+      // ✅ Parse QR code data using helper
+      final qrData = QRHelper.parseQRCode(code);
+      // debugPrint('Scanned QR Data: $qrData');
+      
       if (qrData == null) {
         _showError('Invalid QR Code', 'This QR code is not valid.');
         isProcessing.value = false;
         return;
       }
 
-      // Check QR validity (optional - 24 hour check)
-      if (!qrData.isValid) {
+      // Check QR validity
+      if (qrData['isValid'] != true) {
         _showWarning('Expired QR', 'This QR code has expired.');
         isProcessing.value = false;
         return;
       }
 
-      // Find student
-      final student = allStudents.firstWhereOrNull(
-        (s) => s.id == qrData.id || s.rollNumber == qrData.rollNumber,
-      );
+      final studentId = qrData['id'] as String;
+
+      // ✅ Find student using API-aware method
+      final student = await findStudentById(studentId);
 
       if (student == null) {
-        _showError('Not Found', 'No student found with this QR code.');
+        _showError('Not Found', 'No student found with ID: $studentId');
         isProcessing.value = false;
         return;
       }
@@ -695,16 +358,17 @@ class QRScannerController extends GetxController {
       // Check if already scanned
       final alreadyScanned = scannedStudents.any((s) => s.id == student.id);
       if (alreadyScanned) {
-        _showWarning('Already Marked', '${student.name} is already present.');
+        _showWarning('Already Marked', '${student.name} is already marked present.');
         isProcessing.value = false;
         return;
       }
 
       // Mark attendance
       await markAttendance(student);
+      
     } catch (e) {
       _showError('Error', 'Failed to process QR code: $e');
-      debugPrint('QR process error: $e');
+      // debugPrint('QR process error: $e');
     }
 
     isProcessing.value = false;
@@ -713,195 +377,133 @@ class QRScannerController extends GetxController {
   // ══════════════════════════════════════════════════════════
   // MARK ATTENDANCE
   // ══════════════════════════════════════════════════════════
-  // Future<void> markAttendance(StudentModel student) async {
-  //   // Vibrate feedback
-  //   _vibrate();
-
-  //   // Call API if authenticated
-  //   bool serverSuccess = false;
-  //   if (isAuthenticated) {
-  //     final result = await AttendanceService.markAttendance(
-  //       token: _authToken!,
-  //       studentId: student.id,
-  //       status: 'present',
-  //     );
-
-  //     serverSuccess = result['success'] == true;
-
-  //     if (!serverSuccess) {
-  //       // Check if already marked on server
-  //       if (result['alreadyMarked'] == true) {
-  //         _showWarning('Already Marked', '${student.name} was already marked.');
-  //         return;
-  //       }
-  //       // Show error but still add locally
-  //       debugPrint('Server error: ${result['message']}');
-  //     }
-  //   }
-
-  //   // Update student
-  //   final updatedStudent = student.copyWith(
-  //     isPresent: true,
-  //     isMarkedOnServer: serverSuccess,
-  //     attendanceStatus: 'present',
-  //   );
-
-  //   // Add to scanned list
-  //   scannedStudents.add(updatedStudent);
-
-  //   // Create local attendance record
-  //   final attendance = AttendanceModel(
-  //     id: 'ATT${DateTime.now().millisecondsSinceEpoch}',
-  //     studentId: student.id,
-  //     studentName: student.name,
-  //     studentRollNumber: student.rollNumber,
-  //     studentClassName: student.className,
-  //     studentSection: student.section,
-  //     date: selectedDate.value,
-  //     status: AttendanceStatus.present,
-  //     scannedBy: _storageService.getUser()?.id,
-  //     scannedByName: _storageService.getUser()?.name ?? 'QR Scanner',
-  //     createdAt: DateTime.now(),
-  //     checkInTime: DateTime.now(),
-  //   );
-
-  //   todayAttendance.add(attendance);
-
-  //   // Update in all students list
-  //   final index = allStudents.indexWhere((s) => s.id == student.id);
-  //   if (index != -1) {
-  //     allStudents[index] = updatedStudent;
-  //   }
-
-  //   // Show success
-  //   _showSuccess(student.name, serverSuccess);
-  // }
   Future<void> markAttendance(StudentModel student) async {
-  _vibrate();
+    _vibrate();
 
-  bool serverSuccess = false;
-  String markedStatus = 'present';
-  String? attendanceId;
-  DateTime? checkInTime;
+    bool serverSuccess = false;
+    String markedStatus = 'present';
+    String? attendanceId;
+    DateTime? checkInTime;
 
-  if (isAuthenticated) {
-    try {
-      final result = await AttendanceService.markAttendance(
-        token: _authToken!,
-        studentId: student.id,
-      );
+    
+      try {
+        final result = await AttendanceService.markAttendance(
+          studentId: student.id,
+        );
 
-      debugPrint('Attendance API Response: $result');
+        // debugPrint('Attendance API Response: $result');
 
-      if (result['success'] == true) {
-        serverSuccess = true;
-        
-        // Get the actual status from server response (could be 'late')
-        markedStatus = result['status'] ?? result['data']?['status'] ?? 'present';
-        attendanceId = result['attendanceId'] ?? result['data']?['attendance_id'];
-        
-        // Parse check-in time
-        final checkInTimeStr = result['checkInTime'] ?? result['data']?['check_in_time'];
-        if (checkInTimeStr != null) {
-          checkInTime = DateTime.tryParse(checkInTimeStr);
+        if (result['success'] == true) {
+          serverSuccess = true;
+
+          // Get the actual status from server response (could be 'late')
+          markedStatus =
+              result['status'] ?? result['data']?['status'] ?? 'present';
+          attendanceId =
+              result['attendanceId'] ?? result['data']?['attendance_id'];
+
+          // Parse check-in time
+          final checkInTimeStr =
+              result['checkInTime'] ?? result['data']?['check_in_time'];
+          if (checkInTimeStr != null) {
+            checkInTime = DateTime.tryParse(checkInTimeStr);
+          }
+
+          // debugPrint('✓ Attendance marked on server');
+          // debugPrint('  Status: $markedStatus');
+          // debugPrint('  Attendance ID: $attendanceId');
+          // debugPrint('  Check-in Time: $checkInTime');
+        } else if (result['alreadyMarked'] == true) {
+          _showWarning('Already Marked', '${student.name} was already marked.');
+          return;
+        } else {
+          // debugPrint('✗ Server error: ${result['message']}');
+          // Continue to add locally even if server fails
         }
-
-        debugPrint('✓ Attendance marked on server');
-        debugPrint('  Status: $markedStatus');
-        debugPrint('  Attendance ID: $attendanceId');
-        debugPrint('  Check-in Time: $checkInTime');
-
-      } else if (result['alreadyMarked'] == true) {
-        _showWarning('Already Marked', '${student.name} was already marked.');
-        return;
-      } else {
-        debugPrint('✗ Server error: ${result['message']}');
-        // Continue to add locally even if server fails
+      } catch (e) {
+        // debugPrint('✗ API Error: $e');
+        // Continue to add locally
       }
-    } catch (e) {
-      debugPrint('✗ API Error: $e');
-      // Continue to add locally
+    
+
+    // Create updated student with attendance info
+    final updatedStudent = student.copyWith(
+      isPresent: true,
+      isMarkedOnServer: serverSuccess,
+      attendanceStatus: markedStatus,
+    );
+
+    // Add to scanned list
+    scannedStudents.add(updatedStudent);
+
+    // Create local attendance record
+    final attendance = AttendanceModel(
+      id: attendanceId ?? 'LOCAL_${DateTime.now().millisecondsSinceEpoch}',
+      studentId: student.id,
+      studentName: student.name,
+      studentRollNumber: student.rollNumber,
+      studentClassName: student.className,
+      studentSection: student.section,
+      date: DateTime.now(),
+      status: AttendanceStatusExtension.fromString(markedStatus),
+      checkInTime: checkInTime ?? DateTime.now(),
+      scannedBy: _storageService.getUser()?.id,
+      scannedByName: _storageService.getUser()?.name ?? 'QR Scanner',
+      createdAt: DateTime.now(),
+    );
+
+    todayAttendance.add(attendance);
+
+    // Update in all students list
+    final index = allStudents.indexWhere((s) => s.id == student.id);
+    if (index != -1) {
+      allStudents[index] = updatedStudent;
     }
+
+    // Show appropriate success message
+    _showAttendanceSuccess(student.name, markedStatus, serverSuccess);
   }
 
-  // Create updated student with attendance info
-  final updatedStudent = student.copyWith(
-    isPresent: true,
-    isMarkedOnServer: serverSuccess,
-    attendanceStatus: markedStatus,
-  );
+  // Helper method for showing attendance success
+  void _showAttendanceSuccess(String studentName, String status, bool synced) {
+    String title;
+    String message;
+    Color bgColor;
 
-  // Add to scanned list
-  scannedStudents.add(updatedStudent);
+    if (status == 'late') {
+      title = '⏰ Late';
+      message = '$studentName marked as LATE';
+      bgColor = Colors.orange;
+    } else if (status == 'present') {
+      title = '✓ Present';
+      message = '$studentName marked present';
+      bgColor = Colors.green;
+    } else {
+      title = '✓ Marked';
+      message = '$studentName marked as ${status.toUpperCase()}';
+      bgColor = Colors.blue;
+    }
 
-  // Create local attendance record
-  final attendance = AttendanceModel(
-    id: attendanceId ?? 'LOCAL_${DateTime.now().millisecondsSinceEpoch}',
-    studentId: student.id,
-    studentName: student.name,
-    studentRollNumber: student.rollNumber,
-    studentClassName: student.className,
-    studentSection: student.section,
-    date: DateTime.now(),
-    status: AttendanceStatusExtension.fromString(markedStatus),
-    checkInTime: checkInTime ?? DateTime.now(),
-    scannedBy: _storageService.getUser()?.id,
-    scannedByName: _storageService.getUser()?.name ?? 'QR Scanner',
-    createdAt: DateTime.now(),
-  );
+    if (!synced) {
+      message += ' (pending sync)';
+      bgColor = Colors.blue;
+    }
 
-  todayAttendance.add(attendance);
-
-  // Update in all students list
-  final index = allStudents.indexWhere((s) => s.id == student.id);
-  if (index != -1) {
-    allStudents[index] = updatedStudent;
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: bgColor,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+      icon: Icon(
+        status == 'late' ? Icons.access_time : Icons.check_circle,
+        color: Colors.white,
+      ),
+    );
   }
-
-  // Show appropriate success message
-  _showAttendanceSuccess(student.name, markedStatus, serverSuccess);
-}
-
-// New helper method for showing attendance success
-void _showAttendanceSuccess(String studentName, String status, bool synced) {
-  String title;
-  String message;
-  Color bgColor;
-
-  if (status == 'late') {
-    title = '⏰ Late';
-    message = '$studentName marked as LATE';
-    bgColor = Colors.orange;
-  } else if (status == 'present') {
-    title = '✓ Present';
-    message = '$studentName marked present';
-    bgColor = Colors.green;
-  } else {
-    title = '✓ Marked';
-    message = '$studentName marked as ${status.toUpperCase()}';
-    bgColor = Colors.blue;
-  }
-
-  if (!synced) {
-    message += ' (pending sync)';
-    bgColor = Colors.blue;
-  }
-
-  Get.snackbar(
-    title,
-    message,
-    snackPosition: SnackPosition.TOP,
-    backgroundColor: bgColor,
-    colorText: Colors.white,
-    duration: const Duration(seconds: 2),
-    margin: const EdgeInsets.all(16),
-    borderRadius: 12,
-    icon: Icon(
-      status == 'late' ? Icons.access_time : Icons.check_circle,
-      color: Colors.white,
-    ),
-  );
-}
 
   // ══════════════════════════════════════════════════════════
   // SCANNER CONTROLS
@@ -953,10 +555,7 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
         title: const Text('Clear All'),
         content: const Text('Clear all scanned students?'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               // Only clear locally scanned (not server synced)
@@ -966,7 +565,9 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
                   .toList();
 
               scannedStudents.removeWhere((s) => localOnly.contains(s.id));
-              todayAttendance.removeWhere((a) => localOnly.contains(a.studentId));
+              todayAttendance.removeWhere(
+                (a) => localOnly.contains(a.studentId),
+              );
 
               for (var id in localOnly) {
                 final index = allStudents.indexWhere((s) => s.id == id);
@@ -1009,20 +610,12 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
       return;
     }
 
-    if (!isAuthenticated) {
-      _showError('Auth Error', 'Please login to save attendance.');
-      return;
-    }
-
     Get.dialog(
       AlertDialog(
         title: const Text('Save Attendance'),
         content: Text('Save ${pendingStudents.length} pending attendance?'),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
               Get.back();
@@ -1035,7 +628,9 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
     );
   }
 
-  Future<void> _syncPendingAttendance(List<StudentModel> pendingStudents) async {
+  Future<void> _syncPendingAttendance(
+    List<StudentModel> pendingStudents,
+  ) async {
     isSaving.value = true;
 
     // Show loading
@@ -1064,7 +659,7 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
     for (var student in pendingStudents) {
       try {
         final result = await AttendanceService.markAttendance(
-          token: _authToken!,
+          // token: _authToken!,
           studentId: student.id,
           status: 'present',
         );
@@ -1084,7 +679,7 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
         }
       } catch (e) {
         failedCount++;
-        debugPrint('Sync error for ${student.id}: $e');
+        // debugPrint('Sync error for ${student.id}: $e');
       }
 
       await Future.delayed(const Duration(milliseconds: 100));
@@ -1138,15 +733,10 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
           onSubmitted: (value) => _processManualEntry(value, rollController),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
-            onPressed: () => _processManualEntry(
-              rollController.text,
-              rollController,
-            ),
+            onPressed: () =>
+                _processManualEntry(rollController.text, rollController),
             child: const Text('Add'),
           ),
         ],
@@ -1154,13 +744,40 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
     );
   }
 
-  void _processManualEntry(String rollNumber, TextEditingController controller) {
+  Future<void> _processManualEntry(
+    String rollNumber,
+    TextEditingController controller,
+  ) async {
     final roll = rollNumber.trim();
     if (roll.isEmpty) return;
 
-    final student = allStudents.firstWhereOrNull(
+    // First try local search
+    StudentModel? student = allStudents.firstWhereOrNull(
       (s) => s.rollNumber?.toLowerCase() == roll.toLowerCase(),
     );
+
+    // If not found locally, try API search
+    if (student == null) {
+      try {
+        final result = await StudentService.searchStudents(
+          token: _authToken!,
+          query: roll,
+        );
+        
+        if (result['success'] == true && result['data'] != null) {
+          final List<dynamic> students = result['data'];
+          if (students.isNotEmpty) {
+            student = StudentModel.fromJson(students.first);
+            // Add to local list
+            if (!allStudents.any((s) => s.id == student!.id)) {
+              allStudents.add(student);
+            }
+          }
+        }
+      } catch (e) {
+        // debugPrint('Search error: $e');
+      }
+    }
 
     if (student == null) {
       Get.back();
@@ -1168,7 +785,7 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
       return;
     }
 
-    final alreadyScanned = scannedStudents.any((s) => s.id == student.id);
+    final alreadyScanned = scannedStudents.any((s) => s.id == student!.id);
     if (alreadyScanned) {
       Get.back();
       _showWarning('Already Marked', '${student.name} is already present.');
@@ -1176,7 +793,7 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
     }
 
     Get.back();
-    markAttendance(student);
+    await markAttendance(student);
   }
 
   // ══════════════════════════════════════════════════════════
@@ -1215,23 +832,6 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
     } catch (e) {
       // Ignore vibration errors
     }
-  }
-
-  void _showSuccess(String studentName, bool synced) {
-    Get.snackbar(
-      synced ? '✓ Synced' : '✓ Present',
-      '$studentName marked present${synced ? ' (saved)' : ' (pending)'}',
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: synced ? AppTheme.successColor : Colors.blue,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 2),
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      icon: Icon(
-        synced ? Icons.cloud_done : Icons.check_circle,
-        color: Colors.white,
-      ),
-    );
   }
 
   void _showError(String title, String message) {
@@ -1294,6 +894,23 @@ void _showAttendanceSuccess(String studentName, String status, bool synced) {
     };
   }
 
-  int get syncedCount => scannedStudents.where((s) => s.isMarkedOnServer).length;
-  int get pendingCount => scannedStudents.where((s) => !s.isMarkedOnServer).length;
+  int get syncedCount =>
+      scannedStudents.where((s) => s.isMarkedOnServer).length;
+  int get pendingCount =>
+      scannedStudents.where((s) => !s.isMarkedOnServer).length;
+}
+
+class AttendanceStatusExtension {
+  static AttendanceStatus fromString(String status) {
+    switch (status.toLowerCase()) {
+      case 'present':
+        return AttendanceStatus.present;
+      case 'absent':
+        return AttendanceStatus.absent;
+      case 'late':
+        return AttendanceStatus.late;
+      default:
+        return AttendanceStatus.absent;
+    }
+  }
 }

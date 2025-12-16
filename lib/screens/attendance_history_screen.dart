@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/attendance_controller.dart';
 import '../widgets/attendance_tile.dart';
-import '../app/theme/app_theme.dart';
 
 class AttendanceHistoryScreen extends StatelessWidget {
   AttendanceHistoryScreen({Key? key}) : super(key: key);

@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../app/theme/app_theme.dart';
 
 class ReportsScreen extends StatelessWidget {
-  ReportsScreen({Key? key}) : super(key: key);
+  ReportsScreen({super.key});
 
   final selectedPeriod = 'This Week'.obs;
   final periods = ['Today', 'This Week', 'This Month', 'This Year'];
@@ -114,7 +114,7 @@ class ReportsScreen extends StatelessWidget {
             const SizedBox(height: 12),
             ...['10th', '11th', '12th'].map((className) {
               return _buildClassReportTile(className);
-            }).toList(),
+            }),
             const SizedBox(height: 24),
 
             // Top Performers

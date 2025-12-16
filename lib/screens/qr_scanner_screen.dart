@@ -6,7 +6,7 @@ import '../controllers/qr_scanner_controller.dart';
 import '../app/theme/app_theme.dart';
 
 class QRScannerScreen extends StatelessWidget {
-  QRScannerScreen({Key? key}) : super(key: key);
+  QRScannerScreen({super.key});
 
   final QRScannerController controller = Get.put(QRScannerController());
 

@@ -212,7 +212,7 @@ import '../controllers/auth_controller.dart';
 import '../app/theme/app_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
-  ProfileScreen({Key? key}) : super(key: key);
+  ProfileScreen({super.key});
 
   final AuthController authController = Get.find<AuthController>();
 

@@ -98,49 +98,49 @@ class StudentAttendanceReportModel {
   }
 
   // Create from attendance history
-  factory StudentAttendanceReportModel.fromHistory({
-    required String studentId,
-    required String studentName,
-    required String rollNumber,
-    required String className,
-    required String section,
-    required String period,
-    required List<AttendanceModel> history,
-    DateTime? fromDate,
-    DateTime? toDate,
-  }) {
-    final presentDays = history.where((a) => 
-        a.status == AttendanceStatus.present).length;
-    final absentDays = history.where((a) => 
-        a.status == AttendanceStatus.absent).length;
-    final lateDays = history.where((a) => 
-        a.status == AttendanceStatus.late).length;
-    final excusedDays = history.where((a) => 
-        a.status == AttendanceStatus.excused).length;
+  // factory StudentAttendanceReportModel.fromHistory({
+  //   required String studentId,
+  //   required String studentName,
+  //   required String rollNumber,
+  //   required String className,
+  //   required String section,
+  //   required String period,
+  //   required List<AttendanceModel> history,
+  //   DateTime? fromDate,
+  //   DateTime? toDate,
+  // }) {
+  //   final presentDays = history.where((a) => 
+  //       a.status == AttendanceStatus.present).length;
+  //   final absentDays = history.where((a) => 
+  //       a.status == AttendanceStatus.absent).length;
+  //   final lateDays = history.where((a) => 
+  //       a.status == AttendanceStatus.late).length;
+  //   final excusedDays = history.where((a) => 
+  //       a.status == AttendanceStatus.excused).length;
     
-    final totalDays = history.length;
-    final percentage = totalDays > 0 
-        ? ((presentDays + lateDays) / totalDays * 100) 
-        : 0.0;
+  //   final totalDays = history.length;
+  //   final percentage = totalDays > 0 
+  //       ? ((presentDays + lateDays) / totalDays * 100) 
+  //       : 0.0;
 
-    return StudentAttendanceReportModel(
-      studentId: studentId,
-      studentName: studentName,
-      rollNumber: rollNumber,
-      className: className,
-      section: section,
-      totalDays: totalDays,
-      presentDays: presentDays,
-      absentDays: absentDays,
-      lateDays: lateDays,
-      excusedDays: excusedDays,
-      attendancePercentage: percentage,
-      period: period,
-      fromDate: fromDate,
-      toDate: toDate,
-      attendanceHistory: history,
-    );
-  }
+  //   return StudentAttendanceReportModel(
+  //     studentId: studentId,
+  //     studentName: studentName,
+  //     rollNumber: rollNumber,
+  //     className: className,
+  //     section: section,
+  //     totalDays: totalDays,
+  //     presentDays: presentDays,
+  //     absentDays: absentDays,
+  //     lateDays: lateDays,
+  //     excusedDays: excusedDays,
+  //     attendancePercentage: percentage,
+  //     period: period,
+  //     fromDate: fromDate,
+  //     toDate: toDate,
+  //     attendanceHistory: history,
+  //   );
+  // }
 
   static List<StudentAttendanceReportModel> fromJsonList(List<dynamic> jsonList) {
     return jsonList.map((json) => StudentAttendanceReportModel.fromJson(json)).toList();

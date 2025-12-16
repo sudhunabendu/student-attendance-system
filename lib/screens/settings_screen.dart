@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../app/theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
-  SettingsScreen({Key? key}) : super(key: key);
+  SettingsScreen({super.key});
 
   final isDarkMode = false.obs;
   final notificationsEnabled = true.obs;

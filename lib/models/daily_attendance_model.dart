@@ -94,43 +94,43 @@ class DailyAttendanceModel {
   }
 
   // Calculate from attendance records
-  factory DailyAttendanceModel.fromRecords({
-    required String date,
-    required String className,
-    required String section,
-    required List<AttendanceModel> records,
-    required String markedBy,
-  }) {
-    final presentCount = records.where((r) => 
-        r.status == AttendanceStatus.present).length;
-    final absentCount = records.where((r) => 
-        r.status == AttendanceStatus.absent).length;
-    final lateCount = records.where((r) => 
-        r.status == AttendanceStatus.late).length;
-    final excusedCount = records.where((r) => 
-        r.status == AttendanceStatus.excused).length;
+  // factory DailyAttendanceModel.fromRecords({
+  //   required String date,
+  //   required String className,
+  //   required String section,
+  //   required List<AttendanceModel> records,
+  //   required String markedBy,
+  // }) {
+  //   final presentCount = records.where((r) => 
+  //       r.status == AttendanceStatus.present).length;
+  //   final absentCount = records.where((r) => 
+  //       r.status == AttendanceStatus.absent).length;
+  //   final lateCount = records.where((r) => 
+  //       r.status == AttendanceStatus.late).length;
+  //   final excusedCount = records.where((r) => 
+  //       r.status == AttendanceStatus.excused).length;
     
-    final total = records.length;
-    final percentage = total > 0 
-        ? ((presentCount + lateCount) / total * 100) 
-        : 0.0;
+  //   final total = records.length;
+  //   final percentage = total > 0 
+  //       ? ((presentCount + lateCount) / total * 100) 
+  //       : 0.0;
 
-    return DailyAttendanceModel(
-      date: date,
-      className: className,
-      section: section,
-      totalStudents: total,
-      presentCount: presentCount,
-      absentCount: absentCount,
-      lateCount: lateCount,
-      excusedCount: excusedCount,
-      attendancePercentage: percentage,
-      markedBy: markedBy,
-      markedAt: DateTime.now(),
-      isComplete: true,
-      attendanceRecords: records,
-    );
-  }
+  //   return DailyAttendanceModel(
+  //     date: date,
+  //     className: className,
+  //     section: section,
+  //     totalStudents: total,
+  //     presentCount: presentCount,
+  //     absentCount: absentCount,
+  //     lateCount: lateCount,
+  //     excusedCount: excusedCount,
+  //     attendancePercentage: percentage,
+  //     markedBy: markedBy,
+  //     markedAt: DateTime.now(),
+  //     isComplete: true,
+  //     attendanceRecords: records,
+  //   );
+  // }
 
   static List<DailyAttendanceModel> fromJsonList(List<dynamic> jsonList) {
     return jsonList.map((json) => DailyAttendanceModel.fromJson(json)).toList();

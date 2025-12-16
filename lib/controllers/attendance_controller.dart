@@ -137,10 +137,12 @@
 
 // lib/controllers/attendance_controller.dart
 import 'dart:async';
+import 'package:flutter/foundation.dart'; // ✅ Add this import
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/student_model.dart';
 import '../models/attendance_model.dart';
+import '../models/attendance_response_model.dart'; // ✅ Add this import
 import '../services/attendance_service.dart';
 import '../services/storage_service.dart';
 
@@ -166,6 +168,9 @@ class AttendanceController extends GetxController {
   final students = <StudentModel>[].obs;
   final filteredStudents = <StudentModel>[].obs;
   final attendanceHistory = <AttendanceModel>[].obs;
+  
+  // ✅ Add attendance records list
+  final attendanceRecords = <AttendanceResponseModel>[].obs;
 
   // ══════════════════════════════════════════════════════════
   // OBSERVABLES - Filters
@@ -183,6 +188,7 @@ class AttendanceController extends GetxController {
   final failedStudents = <StudentModel>[].obs;
   final successCount = 0.obs;
   final alreadyMarkedCount = 0.obs;
+  final lateCount = 0.obs; // ✅ Add late count
 
   // ══════════════════════════════════════════════════════════
   // OPTIONS
@@ -205,6 +211,9 @@ class AttendanceController extends GetxController {
   int get presentCount => students.where((s) => s.isPresent).length;
   int get absentCount => students.length - presentCount;
   int get totalCount => students.length;
+  
+  // ✅ Add late students count
+  int get lateStudentsCount => students.where((s) => s.status == 'late').length;
 
   double get attendancePercentage =>
       students.isEmpty ? 0 : (presentCount / students.length) * 100;
@@ -260,72 +269,9 @@ class AttendanceController extends GetxController {
     hasError.value = false;
     errorMessage.value = '';
 
-    try {
-      if (isAuthenticated && selectedClassId.value.isNotEmpty) {
-        final result = await AttendanceService.getStudentsForAttendance(
-          token: _authToken!,
-          classId: selectedClassId.value,
-          section: selectedSection.value,
-          date: selectedDateString,
-        );
-
-        if (result['success'] == true) {
-          students.value = result['students'] ?? [];
-
-          // Mark already marked students
-          final List<dynamic> alreadyMarked = result['alreadyMarked'] ?? [];
-          for (var studentId in alreadyMarked) {
-            final index = students.indexWhere((s) => s.id == studentId);
-            if (index != -1) {
-              students[index].isPresent = true;
-              students[index].isMarkedOnServer = true;
-            }
-          }
-          students.refresh();
-        } else {
-          _loadMockStudents();
-        }
-      } else {
-        _loadMockStudents();
-      }
-
-      _applyFilters();
-    } catch (e) {
-      hasError.value = true;
-      errorMessage.value = 'Error: $e';
-      _showErrorSnackbar('Failed to fetch students: $e');
-      _loadMockStudents();
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  void _loadMockStudents() {
-    students.value = List.generate(
-      25,
-      (index) => StudentModel(
-        id: 'STU${index + 1}',
-        firstName: 'Student',
-        lastName: '${index + 1}',
-        rollNumber: '${2024}${(index + 1).toString().padLeft(3, '0')}',
-        className: selectedClass.value,
-        section: selectedSection.value,
-      ),
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════
-  // FETCH ATTENDANCE HISTORY
-  // ══════════════════════════════════════════════════════════
-  Future<void> fetchAttendanceHistory({
-    String? startDate,
-    String? endDate,
-    String? studentId,
-  }) async {
-    isLoadingHistory.value = true;
-
-    try {
+      try {
       if (isAuthenticated) {
+        // ✅ Use typed result
         final result = await AttendanceService.getAttendanceHistory(
           token: _authToken!,
           startDate: startDate,
@@ -335,9 +281,84 @@ class AttendanceController extends GetxController {
           studentId: studentId,
         );
 
-        if (result['success'] == true) {
-          attendanceHistory.value = result['attendance'] ?? [];
+        // ✅ Access properties directly
+        if (result.success) {
+          // Convert AttendanceResponseModel to AttendanceModel if needed
+          attendanceHistory.value = result.records.map((record) => 
+            AttendanceModel(
+              id: record.attendanceId ?? '',
+              studentId: record.studentId ?? '',
+              studentName: record.fullName,
+              studentRollNumber: record.rollNumber ?? '',
+              studentClassName: record.className ?? '',
+              studentSection: '',
+              date: record.date ?? DateTime.now(),
+              status: AttendanceStatus.values.byName(record.status),
+              checkInTime: record.checkInTime,
+              createdAt: record.createdAt,
+            )
+          ).toList();
+          
+          debugPrint('✅ Fetched ${result.records.length} history records');
         } else {
+          debugPrint('❌ ${result.message}');
+          _loadMockAttendanceHistory();
+        }
+      } else {
+        _loadMockAttendanceHistory();
+      }
+    } catch (e) {
+      _showErrorSnackbar('Failed to fetch history: $e');
+      _loadMockAttendanceHistory();
+    } finally {
+      isLoadingHistory.value = false;
+    }
+  }
+
+
+  // ══════════════════════════════════════════════════════════
+  // FETCH ATTENDANCE HISTORY
+  // ══════════════════════════════════════════════════════════
+   Future<void> fetchAttendanceHistory({
+    String? startDate,
+    String? endDate,
+    String? studentId,
+  }) async {
+    isLoadingHistory.value = true;
+
+    try {
+      if (isAuthenticated) {
+        // ✅ Use typed result
+        final result = await AttendanceService.getAttendanceHistory(
+          token: _authToken!,
+          startDate: startDate,
+          endDate: endDate,
+          classId: selectedClassId.value.isNotEmpty ? selectedClassId.value : null,
+          section: selectedSection.value,
+          studentId: studentId,
+        );
+
+        // ✅ Access properties directly
+        if (result.success) {
+          // Convert AttendanceResponseModel to AttendanceModel if needed
+          attendanceHistory.value = result.records.map((record) => 
+            AttendanceModel(
+              id: record.attendanceId ?? '',
+              studentId: record.studentId ?? '',
+              studentName: record.fullName,
+              studentRollNumber: record.rollNumber ?? '',
+              studentClassName: record.className ?? '',
+              studentSection: '',
+              date: record.date ?? DateTime.now(),
+              status: AttendanceStatus.values.byName(record.status),
+              checkInTime: record.checkInTime,
+              createdAt: record.createdAt,
+            )
+          ).toList();
+          
+          debugPrint('✅ Fetched ${result.records.length} history records');
+        } else {
+          debugPrint('❌ ${result.message}');
           _loadMockAttendanceHistory();
         }
       } else {
@@ -424,33 +445,42 @@ class AttendanceController extends GetxController {
   // ══════════════════════════════════════════════════════════
   // MARK SINGLE STUDENT ATTENDANCE (API)
   // ══════════════════════════════════════════════════════════
-  Future<bool> markSingleStudentAttendance(String studentId) async {
+  Future<Map<String, dynamic>> markSingleStudentAttendance(String studentId) async {
     if (!isAuthenticated) {
       _showErrorSnackbar('Authentication required. Please login again.');
-      return false;
+      return {'success': false, 'message': 'Not authenticated'};
     }
 
     try {
       final result = await AttendanceService.markAttendance(
-        token: _authToken!,
+        // token: _authToken!,
         studentId: studentId,
-        classId: selectedClassId.value.isNotEmpty ? selectedClassId.value : null,
       );
+
+      debugPrint('📥 Mark Attendance Result: $result');
 
       if (result['success'] == true) {
         if (result['alreadyMarked'] == true) {
           _showInfoSnackbar(result['message'] ?? 'Already marked');
         } else {
-          _showSuccessSnackbar(result['message'] ?? 'Attendance marked');
+          final status = result['status'] ?? 'present';
+          final message = result['message'] ?? 'Attendance marked as $status';
+          
+          if (status == 'late') {
+            _showWarningSnackbar(message);
+          } else {
+            _showSuccessSnackbar(message);
+          }
         }
-        return true;
+        return result;
       } else {
         _showErrorSnackbar(result['message'] ?? 'Failed to mark attendance');
-        return false;
+        return result;
       }
     } catch (e) {
+      debugPrint('❌ Mark Attendance Error: $e');
       _showErrorSnackbar('Network error: $e');
-      return false;
+      return {'success': false, 'message': e.toString()};
     }
   }
 
@@ -470,11 +500,17 @@ class AttendanceController extends GetxController {
     student.isLoading = true;
     students.refresh();
 
-    final success = await markSingleStudentAttendance(student.id);
+    final result = await markSingleStudentAttendance(student.id);
 
-    if (success) {
+    if (result['success'] == true) {
       student.isPresent = true;
       student.isMarkedOnServer = true;
+      
+      // ✅ Update attendance status from response
+      final status = result['status'] ?? result['data']?['status'] ?? 'present';
+      student.attendanceStatus = status;
+      
+      debugPrint('✅ ${student.name} marked as $status');
     }
 
     student.isLoading = false;
@@ -483,186 +519,239 @@ class AttendanceController extends GetxController {
   }
 
   // ══════════════════════════════════════════════════════════
-  // SAVE ALL ATTENDANCE
+  // SAVE ALL ATTENDANCE - FIXED VERSION
   // ══════════════════════════════════════════════════════════
-  // Future<void> saveAttendance() async {
-  //   if (!isAuthenticated) {
-  //     _showErrorSnackbar('Authentication required. Please login again.');
-  //     return;
-  //   }
-
-  //   final studentsToMark = students
-  //       .where((s) => s.isPresent && !s.isMarkedOnServer)
-  //       .toList();
-
-  //   if (studentsToMark.isEmpty) {
-  //     _showWarningSnackbar('No new attendance to save');
-  //     return;
-  //   }
-
-  //   isSaving.value = true;
-  //   currentProgress.value = 0;
-  //   totalToMark.value = studentsToMark.length;
-  //   failedStudents.clear();
-  //   successCount.value = 0;
-  //   alreadyMarkedCount.value = 0;
-
-  //   for (int i = 0; i < studentsToMark.length; i++) {
-  //     final student = studentsToMark[i];
-  //     currentProgress.value = i + 1;
-
-  //     try {
-  //       final result = await AttendanceService.markAttendance(
-  //         token: _authToken!,
-  //         studentId: student.id,
-  //         classId: selectedClassId.value.isNotEmpty ? selectedClassId.value : null,
-  //       );
-
-  //       if (result['success'] == true) {
-  //         if (result['alreadyMarked'] == true) {
-  //           alreadyMarkedCount.value++;
-  //         } else {
-  //           successCount.value++;
-  //         }
-  //         student.isMarkedOnServer = true;
-  //       } else {
-  //         failedStudents.add(student);
-  //       }
-  //     } catch (e) {
-  //       failedStudents.add(student);
-  //       debugPrint('Error marking attendance for ${student.id}: $e');
-  //     }
-
-  //     await Future.delayed(const Duration(milliseconds: 100));
-  //   }
-
-  //   students.refresh();
-  //   isSaving.value = false;
-
-  //   _showResultSummary();
-
-  //   if (failedStudents.isEmpty) {
-  //     await Future.delayed(const Duration(seconds: 2));
-  //     Get.back(result: true);
-  //   }
-  // }
-
   Future<void> saveAttendance() async {
-  if (!isAuthenticated) {
-    _showErrorSnackbar('Authentication required. Please login again.');
-    return;
-  }
-
-  final studentsToMark = students
-      .where((s) => s.isPresent && !s.isMarkedOnServer)
-      .toList();
-
-  if (studentsToMark.isEmpty) {
-    _showWarningSnackbar('No new attendance to save');
-    return;
-  }
-
-  isSaving.value = true;
-  currentProgress.value = 0;
-  totalToMark.value = studentsToMark.length;
-  failedStudents.clear();
-  successCount.value = 0;
-  alreadyMarkedCount.value = 0;
-
-  final List<Map<String, dynamic>> results = [];
-
-  for (int i = 0; i < studentsToMark.length; i++) {
-    final student = studentsToMark[i];
-    currentProgress.value = i + 1;
-
-    try {
-      final result = await AttendanceService.markAttendance(
-        token: _authToken!,
-        studentId: student.id,
-        classId: selectedClassId.value.isNotEmpty ? selectedClassId.value : null,
-      );
-
-      debugPrint('Response for ${student.name}: $result');
-
-      if (result['success'] == true) {
-        // Get actual status from response
-        final markedStatus = result['status'] ?? 
-                             result['data']?['status'] ?? 
-                             'present';
-        
-        // Check if already marked
-        if (result['alreadyMarked'] == true) {
-          alreadyMarkedCount.value++;
-        } else {
-          successCount.value++;
-        }
-        
-        // Update student with server response
-        student.isMarkedOnServer = true;
-        student.attendanceStatus = markedStatus;
-        
-        results.add({
-          'student': student.name,
-          'status': markedStatus,
-          'success': true,
-        });
-      } else {
-        failedStudents.add(student);
-        results.add({
-          'student': student.name,
-          'error': result['message'],
-          'success': false,
-        });
-      }
-    } catch (e) {
-      failedStudents.add(student);
-      results.add({
-        'student': student.name,
-        'error': e.toString(),
-        'success': false,
-      });
-      debugPrint('Error marking attendance for ${student.id}: $e');
+    if (!isAuthenticated) {
+      _showErrorSnackbar('Authentication required. Please login again.');
+      return;
     }
 
-    await Future.delayed(const Duration(milliseconds: 100));
+    final studentsToMark = students
+        .where((s) => s.isPresent && !s.isMarkedOnServer)
+        .toList();
+
+    if (studentsToMark.isEmpty) {
+      _showWarningSnackbar('No new attendance to save');
+      return;
+    }
+
+    isSaving.value = true;
+    currentProgress.value = 0;
+    totalToMark.value = studentsToMark.length;
+    failedStudents.clear();
+    successCount.value = 0;
+    alreadyMarkedCount.value = 0;
+    lateCount.value = 0; // ✅ Reset late count
+
+    final List<AttendanceResultItem> results = [];
+
+    for (int i = 0; i < studentsToMark.length; i++) {
+      final student = studentsToMark[i];
+      currentProgress.value = i + 1;
+
+      try {
+        final result = await AttendanceService.markAttendance(
+          // token: _authToken!,
+          studentId: student.id,
+        );
+
+        debugPrint('📥 Response for ${student.name}: $result');
+
+        if (result['success'] == true) {
+          // ✅ Get actual status from response - handle nested data
+          String markedStatus = 'present';
+          
+          // Try to get status from different possible locations
+          if (result['status'] != null) {
+            markedStatus = result['status'].toString();
+          } else if (result['data'] != null && result['data']['status'] != null) {
+            markedStatus = result['data']['status'].toString();
+          } else if (result['attendanceRecord'] != null) {
+            final record = result['attendanceRecord'];
+            if (record is AttendanceResponseModel) {
+              markedStatus = record.status;
+            }
+          }
+
+          // Check if already marked
+          if (result['alreadyMarked'] == true) {
+            alreadyMarkedCount.value++;
+          } else {
+            successCount.value++;
+            
+            // ✅ Track late count
+            if (markedStatus.toLowerCase() == 'late') {
+              lateCount.value++;
+            }
+          }
+
+          // ✅ Update student with server response
+          student.isMarkedOnServer = true;
+          student.attendanceStatus = markedStatus;
+
+          results.add(AttendanceResultItem(
+            studentName: student.name,
+            rollNumber: student.rollNumber ?? '',
+            status: markedStatus,
+            success: true,
+            checkInTime: result['formattedCheckInTime'] ?? result['checkInTime']?.toString(),
+          ));
+
+          debugPrint('✅ ${student.name} → $markedStatus');
+        } else {
+          failedStudents.add(student);
+          results.add(AttendanceResultItem(
+            studentName: student.name,
+            rollNumber: student.rollNumber ?? '',
+            status: 'failed',
+            success: false,
+            error: result['message'] ?? 'Unknown error',
+          ));
+          
+          debugPrint('❌ ${student.name} → Failed: ${result['message']}');
+        }
+      } catch (e) {
+        failedStudents.add(student);
+        results.add(AttendanceResultItem(
+          studentName: student.name,
+          rollNumber: student.rollNumber ?? '',
+          status: 'error',
+          success: false,
+          error: e.toString(),
+        ));
+        
+        debugPrint('❌ Error for ${student.name}: $e');
+      }
+
+      // Small delay to prevent rate limiting
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+
+    students.refresh();
+    isSaving.value = false;
+
+    // ✅ Show detailed result summary
+    _showDetailedResultSummary(results);
+
+    if (failedStudents.isEmpty) {
+      await Future.delayed(const Duration(seconds: 3));
+      Get.back(result: true);
+    }
   }
 
-  students.refresh();
-  isSaving.value = false;
+  // ══════════════════════════════════════════════════════════
+  // SHOW DETAILED RESULT SUMMARY
+  // ══════════════════════════════════════════════════════════
+  void _showDetailedResultSummary(List<AttendanceResultItem> results) {
+    final presentItems = results.where((r) => r.status.toLowerCase() == 'present').toList();
+    final lateItems = results.where((r) => r.status.toLowerCase() == 'late').toList();
+    final failedItems = results.where((r) => !r.success).toList();
 
-  // Show detailed result
-  _showResultSummaryWithDetails(results);
+    final message = StringBuffer();
 
-  if (failedStudents.isEmpty) {
-    await Future.delayed(const Duration(seconds: 2));
-    Get.back(result: true);
+    if (presentItems.isNotEmpty) {
+      message.writeln('✅ Present: ${presentItems.length}');
+    }
+    if (lateItems.isNotEmpty) {
+      message.writeln('⏰ Late: ${lateItems.length}');
+      // Show late students' names
+      for (var item in lateItems.take(3)) {
+        message.writeln('   • ${item.studentName}');
+      }
+      if (lateItems.length > 3) {
+        message.writeln('   ... and ${lateItems.length - 3} more');
+      }
+    }
+    if (alreadyMarkedCount.value > 0) {
+      message.writeln('📋 Already marked: ${alreadyMarkedCount.value}');
+    }
+    if (failedItems.isNotEmpty) {
+      message.writeln('❌ Failed: ${failedItems.length}');
+    }
+    message.write('🚫 Absent: $absentCount');
+
+    // Determine snackbar color based on results
+    Color bgColor = Colors.green;
+    if (failedItems.isNotEmpty) {
+      bgColor = Colors.red;
+    } else if (lateItems.isNotEmpty) {
+      bgColor = Colors.orange;
+    }
+
+    Get.snackbar(
+      'Attendance Summary',
+      message.toString(),
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: bgColor,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 5),
+      margin: const EdgeInsets.all(10),
+      isDismissible: true,
+      mainButton: lateItems.isNotEmpty
+          ? TextButton(
+              onPressed: () => _showLateStudentsDialog(lateItems),
+              child: const Text(
+                'View Late',
+                style: TextStyle(color: Colors.white),
+              ),
+            )
+          : null,
+    );
   }
-}
 
-void _showResultSummaryWithDetails(List<Map<String, dynamic>> results) {
-  final presentCount = results.where((r) => r['status'] == 'present').length;
-  final lateCount = results.where((r) => r['status'] == 'late').length;
-  final failedCount = results.where((r) => r['success'] == false).length;
-
-  final message = StringBuffer();
-
-  if (presentCount > 0) message.writeln('✅ Present: $presentCount');
-  if (lateCount > 0) message.writeln('⏰ Late: $lateCount');
-  if (alreadyMarkedCount.value > 0) message.writeln('📋 Already marked: ${alreadyMarkedCount.value}');
-  if (failedCount > 0) message.writeln('❌ Failed: $failedCount');
-  message.write('🚫 Absent: $absentCount');
-
-  Get.snackbar(
-    'Attendance Summary',
-    message.toString(),
-    snackPosition: SnackPosition.BOTTOM,
-    backgroundColor: failedCount > 0 ? Colors.orange : 
-                     lateCount > 0 ? Colors.orange : Colors.green,
-    colorText: Colors.white,
-    duration: const Duration(seconds: 5),
-    margin: const EdgeInsets.all(10),
-  );
-}
+  // ══════════════════════════════════════════════════════════
+  // SHOW LATE STUDENTS DIALOG
+  // ══════════════════════════════════════════════════════════
+  void _showLateStudentsDialog(List<AttendanceResultItem> lateItems) {
+    Get.dialog(
+      AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.access_time, color: Colors.orange),
+            const SizedBox(width: 8),
+            const Text('Late Students'),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: lateItems.length,
+            itemBuilder: (context, index) {
+              final item = lateItems[index];
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.orange.shade100,
+                  child: Text(
+                    item.studentName.isNotEmpty 
+                        ? item.studentName[0].toUpperCase() 
+                        : 'S',
+                    style: TextStyle(color: Colors.orange.shade800),
+                  ),
+                ),
+                title: Text(item.studentName),
+                subtitle: Text('Roll: ${item.rollNumber}'),
+                trailing: Text(
+                  item.checkInTime ?? '--:--',
+                  style: const TextStyle(
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
 
   // ══════════════════════════════════════════════════════════
   // RETRY FAILED ATTENDANCE
@@ -689,20 +778,21 @@ void _showResultSummaryWithDetails(List<Map<String, dynamic>> results) {
 
       try {
         final result = await AttendanceService.markAttendance(
-          token: _authToken!,
+          // token: _authToken!,
           studentId: student.id,
-          classId: selectedClassId.value.isNotEmpty ? selectedClassId.value : null,
         );
 
         if (result['success'] == true) {
           retrySuccess++;
           student.isMarkedOnServer = true;
+          student.isPresent = result['status'] ?? 'present';
           successCount.value++;
         } else {
           failedStudents.add(student);
         }
       } catch (e) {
         failedStudents.add(student);
+        debugPrint('❌ Retry error for ${student.name}: $e');
       }
 
       await Future.delayed(const Duration(milliseconds: 100));
@@ -767,6 +857,14 @@ void _showResultSummaryWithDetails(List<Map<String, dynamic>> results) {
   }
 
   // ══════════════════════════════════════════════════════════
+  // SET CLASS ID (from external source like QR scanner)
+  // ══════════════════════════════════════════════════════════
+  void setClassId(String classId) {
+    selectedClassId.value = classId;
+    fetchStudentsForAttendance();
+  }
+
+  // ══════════════════════════════════════════════════════════
   // DATE PICKER
   // ══════════════════════════════════════════════════════════
   Future<void> selectDate(BuildContext context) async {
@@ -803,6 +901,7 @@ void _showResultSummaryWithDetails(List<Map<String, dynamic>> results) {
         colorText: Colors.white,
         duration: const Duration(seconds: 3),
         margin: const EdgeInsets.all(10),
+        icon: const Icon(Icons.check_circle, color: Colors.white),
       );
     }
   }
@@ -817,6 +916,7 @@ void _showResultSummaryWithDetails(List<Map<String, dynamic>> results) {
         colorText: Colors.white,
         duration: const Duration(seconds: 3),
         margin: const EdgeInsets.all(10),
+        icon: const Icon(Icons.error, color: Colors.white),
       );
     }
   }
@@ -831,6 +931,7 @@ void _showResultSummaryWithDetails(List<Map<String, dynamic>> results) {
         colorText: Colors.white,
         duration: const Duration(seconds: 3),
         margin: const EdgeInsets.all(10),
+        icon: const Icon(Icons.warning, color: Colors.white),
       );
     }
   }
@@ -845,6 +946,7 @@ void _showResultSummaryWithDetails(List<Map<String, dynamic>> results) {
         colorText: Colors.white,
         duration: const Duration(seconds: 3),
         margin: const EdgeInsets.all(10),
+        icon: const Icon(Icons.info, color: Colors.white),
       );
     }
   }
@@ -854,6 +956,9 @@ void _showResultSummaryWithDetails(List<Map<String, dynamic>> results) {
 
     if (successCount.value > 0) {
       message.writeln('✅ Marked: ${successCount.value}');
+    }
+    if (lateCount.value > 0) {
+      message.writeln('⏰ Late: ${lateCount.value}');
     }
     if (alreadyMarkedCount.value > 0) {
       message.writeln('📋 Already: ${alreadyMarkedCount.value}');
@@ -882,8 +987,55 @@ void _showResultSummaryWithDetails(List<Map<String, dynamic>> results) {
       'total': totalCount,
       'present': presentCount,
       'absent': absentCount,
+      'late': lateStudentsCount,
       'synced': students.where((s) => s.isMarkedOnServer).length,
       'pending': students.where((s) => s.isPresent && !s.isMarkedOnServer).length,
     };
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // GET STUDENTS BY STATUS
+  // ══════════════════════════════════════════════════════════
+  List<StudentModel> getStudentsByStatus(String status) {
+    return students.where((s) => s.attendanceStatus.toLowerCase() == status.toLowerCase()).toList();
+  }
+
+  List<StudentModel> get lateStudents => getStudentsByStatus('late');
+  List<StudentModel> get presentStudents => getStudentsByStatus('present');
+  List<StudentModel> get absentStudents => students.where((s) => !s.isPresent).toList();
+  
+  get studentId => null;
+  
+  get endDate => null;
+  
+  get startDate => null;
+}
+
+// ══════════════════════════════════════════════════════════
+// ATTENDANCE RESULT ITEM MODEL
+// ══════════════════════════════════════════════════════════
+class AttendanceResultItem {
+  final String studentName;
+  final String rollNumber;
+  final String status;
+  final bool success;
+  final String? error;
+  final String? checkInTime;
+
+  AttendanceResultItem({
+    required this.studentName,
+    required this.rollNumber,
+    required this.status,
+    required this.success,
+    this.error,
+    this.checkInTime,
+  });
+
+  bool get isLate => status.toLowerCase() == 'late';
+  bool get isPresent => status.toLowerCase() == 'present';
+
+  @override
+  String toString() {
+    return 'AttendanceResultItem(student: $studentName, status: $status, success: $success)';
   }
 }

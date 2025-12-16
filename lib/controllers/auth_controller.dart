@@ -1,86 +1,343 @@
-// lib/controllers/auth_controller.dart
+// // lib/controllers/auth_controller.dart
+// // import 'package:flutter/material.dart';
+// // import 'package:get/get.dart';
+// // import '../app/routes/app_routes.dart';
+// // import '../models/user_model.dart';
+
+// // class AuthController extends GetxController {
+// //   final isLoading = false.obs;
+// //   final isLoggedIn = false.obs;
+// //   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
+  
+// //   final emailController = TextEditingController();
+// //   final passwordController = TextEditingController();
+// //   final obscurePassword = true.obs;
+
+// //   void togglePasswordVisibility() {
+// //     obscurePassword.value = !obscurePassword.value;
+// //   }
+
+// //   Future<void> login() async {
+// //     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+// //       Get.snackbar(
+// //         'Error',
+// //         'Please fill all fields',
+// //         snackPosition: SnackPosition.BOTTOM,
+// //         backgroundColor: Colors.red,
+// //         colorText: Colors.white,
+// //       );
+// //       return;
+// //     }
+
+// //     isLoading.value = true;
+    
+// //     // Simulate API call
+// //     await Future.delayed(const Duration(seconds: 2));
+    
+// //     // Mock user data
+// //     currentUser.value = UserModel(
+// //       id: '1',
+// //       name: 'John Doe',
+// //       email: emailController.text,
+// //       role: 'Teacher',
+// //       department: 'Computer Science',
+// //     );
+    
+// //     isLoading.value = false;
+// //     isLoggedIn.value = true;
+    
+// //     Get.offAllNamed(AppRoutes.dashboard);
+    
+// //     Get.snackbar(
+// //       'Success',
+// //       'Welcome back, ${currentUser.value?.name}!',
+// //       snackPosition: SnackPosition.BOTTOM,
+// //       backgroundColor: Colors.green,
+// //       colorText: Colors.white,
+// //     );
+// //   }
+
+// //   void logout() {
+// //     Get.dialog(
+// //       AlertDialog(
+// //         title: const Text('Logout'),
+// //         content: const Text('Are you sure you want to logout?'),
+// //         actions: [
+// //           TextButton(
+// //             onPressed: () => Get.back(),
+// //             child: const Text('Cancel'),
+// //           ),
+// //           ElevatedButton(
+// //             onPressed: () {
+// //               currentUser.value = null;
+// //               isLoggedIn.value = false;
+// //               emailController.clear();
+// //               passwordController.clear();
+// //               Get.offAllNamed(AppRoutes.login);
+// //             },
+// //             child: const Text('Logout'),
+// //           ),
+// //         ],
+// //       ),
+// //     );
+// //   }
+
+// //   @override
+// //   void onClose() {
+// //     emailController.dispose();
+// //     passwordController.dispose();
+// //     super.onClose();
+// //   }
+// // }
+
+// // lib/controllers/auth_controller.dart
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
 // import '../app/routes/app_routes.dart';
+// import '../app/theme/app_theme.dart';
 // import '../models/user_model.dart';
+// import '../services/auth_service.dart';
+// import '../services/storage_service.dart';
 
 // class AuthController extends GetxController {
+//   final AuthService _authService = AuthService();
+//   final StorageService _storageService = StorageService();
+  
+//   // Observables
 //   final isLoading = false.obs;
 //   final isLoggedIn = false.obs;
 //   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
+//   final obscurePassword = true.obs;
+//   final rememberMe = false.obs;
   
+//   // Text Controllers
 //   final emailController = TextEditingController();
 //   final passwordController = TextEditingController();
-//   final obscurePassword = true.obs;
+  
+//   // Form Key
+//   final formKey = GlobalKey<FormState>();
 
+//   @override
+//   void onInit() {
+//     super.onInit();
+//     _checkAuthStatus();
+//   }
+
+//   // Check if user is already logged in
+//   Future<void> _checkAuthStatus() async {
+//     await _storageService.init();
+    
+//     if (_authService.isAuthenticated()) {
+//       currentUser.value = _authService.getCurrentUser();
+//       isLoggedIn.value = true;
+//     }
+//   }
+
+//   // Toggle password visibility
 //   void togglePasswordVisibility() {
 //     obscurePassword.value = !obscurePassword.value;
 //   }
 
+//   // Toggle remember me
+//   void toggleRememberMe() {
+//     rememberMe.value = !rememberMe.value;
+//   }
+
+//   // Validate email
+//   String? validateEmail(String? value) {
+//     if (value == null || value.trim().isEmpty) {
+//       return 'Email is required';
+//     }
+//     if (!GetUtils.isEmail(value.trim())) {
+//       return 'Please enter a valid email';
+//     }
+//     return null;
+//   }
+
+//   // Validate password
+//   String? validatePassword(String? value) {
+//     if (value == null || value.isEmpty) {
+//       return 'Password is required';
+//     }
+//     if (value.length < 6) {
+//       return 'Password must be at least 6 characters';
+//     }
+//     return null;
+//   }
+
+//   // Login
 //   Future<void> login() async {
-//     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-//       Get.snackbar(
-//         'Error',
-//         'Please fill all fields',
-//         snackPosition: SnackPosition.BOTTOM,
-//         backgroundColor: Colors.red,
-//         colorText: Colors.white,
-//       );
+//     // Hide keyboard
+//     FocusManager.instance.primaryFocus?.unfocus();
+    
+//     // Validate form
+//     if (!formKey.currentState!.validate()) {
 //       return;
 //     }
 
 //     isLoading.value = true;
-    
-//     // Simulate API call
-//     await Future.delayed(const Duration(seconds: 2));
-    
-//     // Mock user data
-//     currentUser.value = UserModel(
-//       id: '1',
-//       name: 'John Doe',
-//       email: emailController.text,
-//       role: 'Teacher',
-//       department: 'Computer Science',
-//     );
-    
-//     isLoading.value = false;
-//     isLoggedIn.value = true;
-    
-//     Get.offAllNamed(AppRoutes.dashboard);
-    
-//     Get.snackbar(
-//       'Success',
-//       'Welcome back, ${currentUser.value?.name}!',
-//       snackPosition: SnackPosition.BOTTOM,
-//       backgroundColor: Colors.green,
-//       colorText: Colors.white,
-//     );
+
+//     try {
+//       final response = await _authService.login(
+//         email: emailController.text.trim(),
+//         password: passwordController.text,
+//       );
+
+//       if (response.isSuccess && response.user != null) {
+//         currentUser.value = response.user;
+//         isLoggedIn.value = true;
+
+//         // Clear password field for security
+//         if (!rememberMe.value) {
+//           passwordController.clear();
+//         }
+
+//         // Navigate to dashboard
+//         Get.offAllNamed(AppRoutes.dashboard);
+
+//         // Show success message
+//         _showSuccessSnackbar(
+//           'Welcome Back!',
+//           'Hello ${currentUser.value?.firstName ?? 'User'}!',
+//         );
+//       } else {
+//         // Show error message
+//         _showErrorSnackbar(
+//           'Login Failed',
+//           response.error ?? response.response ?? 'Something went wrong',
+//         );
+//       }
+//     } catch (e) {
+//       _showErrorSnackbar(
+//         'Error',
+//         'Something went wrong. Please try again.',
+//       );
+//     } finally {
+//       isLoading.value = false;
+//     }
 //   }
 
+//   // Logout
 //   void logout() {
 //     Get.dialog(
 //       AlertDialog(
-//         title: const Text('Logout'),
+//         shape: RoundedRectangleBorder(
+//           borderRadius: BorderRadius.circular(16),
+//         ),
+//         title: Row(
+//           children: [
+//             Container(
+//               padding: const EdgeInsets.all(8),
+//               decoration: BoxDecoration(
+//                 color: AppTheme.errorColor.withOpacity(0.1),
+//                 borderRadius: BorderRadius.circular(8),
+//               ),
+//               child: const Icon(
+//                 Icons.logout,
+//                 color: AppTheme.errorColor,
+//               ),
+//             ),
+//             const SizedBox(width: 12),
+//             const Text('Logout'),
+//           ],
+//         ),
 //         content: const Text('Are you sure you want to logout?'),
 //         actions: [
 //           TextButton(
 //             onPressed: () => Get.back(),
-//             child: const Text('Cancel'),
+//             child: Text(
+//               'Cancel',
+//               style: TextStyle(color: Colors.grey[600]),
+//             ),
 //           ),
 //           ElevatedButton(
-//             onPressed: () {
-//               currentUser.value = null;
-//               isLoggedIn.value = false;
-//               emailController.clear();
-//               passwordController.clear();
-//               Get.offAllNamed(AppRoutes.login);
+//             onPressed: () async {
+//               Get.back();
+//               await _performLogout();
 //             },
+//             style: ElevatedButton.styleFrom(
+//               backgroundColor: AppTheme.errorColor,
+//               shape: RoundedRectangleBorder(
+//                 borderRadius: BorderRadius.circular(8),
+//               ),
+//             ),
 //             child: const Text('Logout'),
 //           ),
 //         ],
 //       ),
 //     );
 //   }
+
+//   // Perform logout
+//   Future<void> _performLogout() async {
+//     // Show loading
+//     Get.dialog(
+//       const Center(
+//         child: Card(
+//           child: Padding(
+//             padding: EdgeInsets.all(20),
+//             child: CircularProgressIndicator(),
+//           ),
+//         ),
+//       ),
+//       barrierDismissible: false,
+//     );
+
+//     await _authService.logout();
+
+//     currentUser.value = null;
+//     isLoggedIn.value = false;
+    
+//     if (!rememberMe.value) {
+//       emailController.clear();
+//     }
+//     passwordController.clear();
+
+//     Get.back(); // Close loading dialog
+//     Get.offAllNamed(AppRoutes.login);
+
+//     _showSuccessSnackbar(
+//       'Logged Out',
+//       'You have been logged out successfully.',
+//     );
+//   }
+
+//   // Success Snackbar
+//   void _showSuccessSnackbar(String title, String message) {
+//     Get.snackbar(
+//       title,
+//       message,
+//       snackPosition: SnackPosition.TOP,
+//       backgroundColor: AppTheme.successColor,
+//       colorText: Colors.white,
+//       duration: const Duration(seconds: 3),
+//       margin: const EdgeInsets.all(16),
+//       borderRadius: 12,
+//       icon: const Icon(Icons.check_circle, color: Colors.white),
+//     );
+//   }
+
+//   // Error Snackbar
+//   void _showErrorSnackbar(String title, String message) {
+//     Get.snackbar(
+//       title,
+//       message,
+//       snackPosition: SnackPosition.TOP,
+//       backgroundColor: AppTheme.errorColor,
+//       colorText: Colors.white,
+//       duration: const Duration(seconds: 4),
+//       margin: const EdgeInsets.all(16),
+//       borderRadius: 12,
+//       icon: const Icon(Icons.error, color: Colors.white),
+//     );
+//   }
+
+//   // Getters
+//   String? get token => currentUser.value?.token;
+//   String get userName => currentUser.value?.name ?? 'User';
+//   String get userEmail => currentUser.value?.email ?? '';
+//   String get userInitials => currentUser.value?.initials ?? 'U';
+//   String get userFirstName => currentUser.value?.firstName ?? 'User';
 
 //   @override
 //   void onClose() {
@@ -93,68 +350,98 @@
 // lib/controllers/auth_controller.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../app/routes/app_routes.dart';
-import '../app/theme/app_theme.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
+import '../app/routes/app_routes.dart';
+import '../app/theme/app_theme.dart';
 
 class AuthController extends GetxController {
+  // ══════════════════════════════════════════════════════════
+  // SERVICES
+  // ══════════════════════════════════════════════════════════
   final AuthService _authService = AuthService();
   final StorageService _storageService = StorageService();
-  
-  // Observables
+
+  // ══════════════════════════════════════════════════════════
+  // FORM CONTROLLERS
+  // ══════════════════════════════════════════════════════════
+  final formKey = GlobalKey<FormState>();
+  final mobileController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  // ══════════════════════════════════════════════════════════
+  // OBSERVABLES
+  // ══════════════════════════════════════════════════════════
   final isLoading = false.obs;
   final isLoggedIn = false.obs;
-  final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
   final obscurePassword = true.obs;
   final rememberMe = false.obs;
-  
-  // Text Controllers
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  
-  // Form Key
-  final formKey = GlobalKey<FormState>();
+  final currentUser = Rxn<UserModel>();
 
+  // ══════════════════════════════════════════════════════════
+  // LIFECYCLE
+  // ══════════════════════════════════════════════════════════
   @override
   void onInit() {
     super.onInit();
-    _checkAuthStatus();
+    _checkLoginStatus();
+    _loadRememberedCredentials();
   }
 
-  // Check if user is already logged in
-  Future<void> _checkAuthStatus() async {
-    await _storageService.init();
-    
-    if (_authService.isAuthenticated()) {
-      currentUser.value = _authService.getCurrentUser();
+  @override
+  void onClose() {
+    mobileController.dispose();
+    passwordController.dispose();
+    super.onClose();
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // CHECK LOGIN STATUS
+  // ══════════════════════════════════════════════════════════
+  Future<void> _checkLoginStatus() async {
+    final isUserLoggedIn = _storageService.isLoggedIn();
+    final token = _storageService.getToken();
+    final user = _storageService.getUser();
+
+    if (isUserLoggedIn && token != null && user != null) {
       isLoggedIn.value = true;
+      currentUser.value = user;
+      
+      // Navigate to dashboard
+      Future.delayed(const Duration(milliseconds: 100), () {
+        Get.offAllNamed(AppRoutes.dashboard);
+      });
     }
   }
 
-  // Toggle password visibility
-  void togglePasswordVisibility() {
-    obscurePassword.value = !obscurePassword.value;
-  }
-
-  // Toggle remember me
-  void toggleRememberMe() {
-    rememberMe.value = !rememberMe.value;
-  }
-
-  // Validate email
-  String? validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Email is required';
+  // ══════════════════════════════════════════════════════════
+  // LOAD REMEMBERED CREDENTIALS
+  // ══════════════════════════════════════════════════════════
+  void _loadRememberedCredentials() {
+    final rememberedMobile = _storageService.getRememberedMobile();
+    if (rememberedMobile != null && rememberedMobile.isNotEmpty) {
+      mobileController.text = rememberedMobile;
+      rememberMe.value = true;
     }
-    if (!GetUtils.isEmail(value.trim())) {
-      return 'Please enter a valid email';
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // VALIDATORS
+  // ══════════════════════════════════════════════════════════
+  String? validateMobile(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Mobile number is required';
+    }
+    if (value.length != 10) {
+      return 'Enter a valid 10-digit mobile number';
+    }
+    if (!RegExp(r'^[6-9]\d{9}$').hasMatch(value)) {
+      return 'Enter a valid Indian mobile number';
     }
     return null;
   }
 
-  // Validate password
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Password is required';
@@ -165,11 +452,24 @@ class AuthController extends GetxController {
     return null;
   }
 
-  // Login
+  // ══════════════════════════════════════════════════════════
+  // TOGGLE FUNCTIONS
+  // ══════════════════════════════════════════════════════════
+  void togglePasswordVisibility() {
+    obscurePassword.value = !obscurePassword.value;
+  }
+
+  void toggleRememberMe() {
+    rememberMe.value = !rememberMe.value;
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // LOGIN
+  // ══════════════════════════════════════════════════════════
   Future<void> login() async {
     // Hide keyboard
     FocusManager.instance.primaryFocus?.unfocus();
-    
+
     // Validate form
     if (!formKey.currentState!.validate()) {
       return;
@@ -178,17 +478,31 @@ class AuthController extends GetxController {
     isLoading.value = true;
 
     try {
+      final mobileNumber = mobileController.text.trim();
+      final password = passwordController.text;
+
+      debugPrint('📤 Attempting login with mobile: $mobileNumber');
+
       final response = await _authService.login(
-        email: emailController.text.trim(),
-        password: passwordController.text,
+        mobileNumber: mobileNumber,
+        password: password,
       );
 
+      debugPrint('📥 Login response: ${response.isSuccess}');
+
       if (response.isSuccess && response.user != null) {
+        // ✅ Save user data to storage ONLY after successful login
+        await _saveUserSession(response.user!, response.user!.token);
+
+        // Update observables
         currentUser.value = response.user;
         isLoggedIn.value = true;
 
-        // Clear password field for security
-        if (!rememberMe.value) {
+        // Handle remember me
+        if (rememberMe.value) {
+          await _storageService.saveRememberedMobile(mobileNumber);
+        } else {
+          await _storageService.removeRememberedMobile();
           passwordController.clear();
         }
 
@@ -198,16 +512,17 @@ class AuthController extends GetxController {
         // Show success message
         _showSuccessSnackbar(
           'Welcome Back!',
-          'Hello ${currentUser.value?.firstName ?? 'User'}!',
+          'Hello ${response.user?.firstName ?? 'User'}!',
         );
       } else {
         // Show error message
         _showErrorSnackbar(
           'Login Failed',
-          response.error ?? response.response ?? 'Something went wrong',
+          response.error ?? response.response ?? 'Invalid credentials',
         );
       }
     } catch (e) {
+      debugPrint('❌ Login error: $e');
       _showErrorSnackbar(
         'Error',
         'Something went wrong. Please try again.',
@@ -217,132 +532,128 @@ class AuthController extends GetxController {
     }
   }
 
-  // Logout
-  void logout() {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppTheme.errorColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.logout,
-                color: AppTheme.errorColor,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text('Logout'),
-          ],
-        ),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back();
-              await _performLogout();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.errorColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
+  // ══════════════════════════════════════════════════════════
+  // SAVE USER SESSION
+  // ══════════════════════════════════════════════════════════
+  Future<void> _saveUserSession(UserModel user, String? token) async {
+    await _storageService.saveUser(user);
+    if (token != null) {
+      await _storageService.saveToken(token);
+    }
+    await _storageService.setLoggedIn(true);
+    
+    debugPrint('✓ User session saved');
   }
 
-  // Perform logout
-  Future<void> _performLogout() async {
-    // Show loading
-    Get.dialog(
-      const Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: CircularProgressIndicator(),
+  // ══════════════════════════════════════════════════════════
+  // LOGOUT
+  // ══════════════════════════════════════════════════════════
+  Future<void> logout() async {
+    try {
+      // Show confirmation dialog
+      final confirmed = await Get.dialog<bool>(
+        AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
+          title: const Row(
+            children: [
+              Icon(Icons.logout, color: Colors.red),
+              SizedBox(width: 12),
+              Text('Logout'),
+            ],
+          ),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Get.back(result: true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
         ),
-      ),
-      barrierDismissible: false,
-    );
+      );
 
-    await _authService.logout();
+      if (confirmed != true) return;
+
+      // Clear storage
+      await _storageService.clearSession();
+
+      // Reset observables
+      currentUser.value = null;
+      isLoggedIn.value = false;
+
+      // Clear password field (keep mobile if remember me is on)
+      passwordController.clear();
+      if (!rememberMe.value) {
+        mobileController.clear();
+      }
+
+      // Navigate to login screen
+      Get.offAllNamed(AppRoutes.login);
+
+      _showSuccessSnackbar('Logged Out', 'You have been logged out successfully');
+    } catch (e) {
+      debugPrint('❌ Logout error: $e');
+      _showErrorSnackbar('Error', 'Failed to logout. Please try again.');
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // FORCE LOGOUT (for session expiry)
+  // ══════════════════════════════════════════════════════════
+  Future<void> forceLogout({String? message}) async {
+    await _storageService.clearSession();
 
     currentUser.value = null;
     isLoggedIn.value = false;
-    
-    if (!rememberMe.value) {
-      emailController.clear();
-    }
     passwordController.clear();
 
-    Get.back(); // Close loading dialog
     Get.offAllNamed(AppRoutes.login);
 
-    _showSuccessSnackbar(
-      'Logged Out',
-      'You have been logged out successfully.',
-    );
+    if (message != null) {
+      _showErrorSnackbar('Session Expired', message);
+    }
   }
 
-  // Success Snackbar
+  // ══════════════════════════════════════════════════════════
+  // SNACKBAR HELPERS
+  // ══════════════════════════════════════════════════════════
   void _showSuccessSnackbar(String title, String message) {
-    Get.snackbar(
-      title,
-      message,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: AppTheme.successColor,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 3),
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      icon: const Icon(Icons.check_circle, color: Colors.white),
-    );
+    if (!Get.isSnackbarOpen) {
+      Get.snackbar(
+        title,
+        message,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppTheme.successColor,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        duration: const Duration(seconds: 3),
+        icon: const Icon(Icons.check_circle, color: Colors.white),
+      );
+    }
   }
 
-  // Error Snackbar
   void _showErrorSnackbar(String title, String message) {
-    Get.snackbar(
-      title,
-      message,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: AppTheme.errorColor,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 4),
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-      icon: const Icon(Icons.error, color: Colors.white),
-    );
-  }
-
-  // Getters
-  String? get token => currentUser.value?.token;
-  String get userName => currentUser.value?.name ?? 'User';
-  String get userEmail => currentUser.value?.email ?? '';
-  String get userInitials => currentUser.value?.initials ?? 'U';
-  String get userFirstName => currentUser.value?.firstName ?? 'User';
-
-  @override
-  void onClose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.onClose();
+    if (!Get.isSnackbarOpen) {
+      Get.snackbar(
+        title,
+        message,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppTheme.errorColor,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        duration: const Duration(seconds: 3),
+        icon: const Icon(Icons.error, color: Colors.white),
+      );
+    }
   }
 }
