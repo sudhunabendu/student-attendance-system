@@ -653,7 +653,7 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildWelcomeCard() {
     return Obx(() => Card(
-      color: AppTheme.primaryColor,
+      color: AppTheme.primaryLight,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Row(
@@ -705,15 +705,6 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _buildActionCard(
-            'Attendance',
-            Icons.how_to_reg,
-            AppTheme.primaryColor,
-            () => Get.toNamed(AppRoutes.markAttendance),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildActionCard(
             'Students',
             Icons.people_outline,
             AppTheme.secondaryColor,
@@ -723,8 +714,8 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _buildActionCard(
-            'Reports',
-            Icons.assessment,
+            'Teacher QR Scanner',
+            Icons.qr_code_scanner,
             AppTheme.secondaryColor,
             () => Get.toNamed(AppRoutes.students),
           ),

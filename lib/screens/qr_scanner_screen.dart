@@ -155,7 +155,7 @@ class QRScannerScreen extends StatelessWidget {
           ],
         );
       }),
-      bottomNavigationBar: _buildSaveButton(),
+      // bottomNavigationBar: _buildSaveButton(),
     );
   }
 
@@ -373,25 +373,25 @@ class QRScannerScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSaveButton() {
-    return Obx(() => controller.scannedStudents.isNotEmpty
-        ? Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: SafeArea(
-              child: ElevatedButton.icon(
-                onPressed: controller.saveAttendance,
-                icon: const Icon(Icons.save),
-                label: Text('Save Attendance (${controller.scannedStudents.length})'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          )
-        : const SizedBox.shrink());
-  }
+  // Widget _buildSaveButton() {
+  //   return Obx(() => controller.scannedStudents.isNotEmpty
+  //       ? Container(
+  //           padding: const EdgeInsets.all(16),
+  //           color: Colors.white,
+  //           child: SafeArea(
+  //             child: ElevatedButton.icon(
+  //               onPressed: controller.saveAttendance,
+  //               icon: const Icon(Icons.save),
+  //               label: Text('Save Attendance (${controller.scannedStudents.length})'),
+  //               style: ElevatedButton.styleFrom(
+  //                 backgroundColor: AppTheme.primaryColor,
+  //                 foregroundColor: Colors.white,
+  //                 padding: const EdgeInsets.symmetric(vertical: 16),
+  //                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //               ),
+  //             ),
+  //           ),
+  //         )
+  //       : const SizedBox.shrink());
+  // }
 }

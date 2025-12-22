@@ -19,30 +19,32 @@ class AttendanceService {
     try {
       final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.markAttendance);
       // print("Mark Attendance URL: $url");
-      final body = <String, dynamic>{
-        "student_id": studentId,
-      };
-          // ✅ Debug: Print request details
-    debugPrint("📤 Mark Attendance URL: $url");
-    debugPrint("📤 Mark Attendance Body: ${jsonEncode(body)}");
+      final body = <String, dynamic>{"student_id": studentId};
+      // ✅ Debug: Print request details
+      // debugPrint("📤 Mark Attendance URL: $url");
+      // debugPrint("📤 Mark Attendance Body: ${jsonEncode(body)}");
       final response = await http.post(
         url,
         headers: {
-        'Content-Type': 'application/json',  // ✅ THIS WAS MISSING!
-        'Accept': 'application/json',
-      },
+          'Content-Type': 'application/json', // ✅ THIS WAS MISSING!
+          'Accept': 'application/json',
+        },
         body: jsonEncode(body),
       );
 
       final data = jsonDecode(response.body);
-      debugPrint("📥 Mark Attendance Response: $data");
+      // debugPrint("📥 Mark Attendance Response: $data");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         // ✅ Parse using AttendanceResponseModel
-        final attendanceResponse = AttendanceResponseModel.fromApiResponse(data);
-        
+        final attendanceResponse = AttendanceResponseModel.fromApiResponse(
+          data,
+        );
+
         // Check if already marked
-        final bool alreadyMarked = data["message"]?.toString().toLowerCase().contains('already') ?? false;
+        final bool alreadyMarked =
+            data["message"]?.toString().toLowerCase().contains('already') ??
+            false;
 
         return {
           "success": data["success"] ?? true,
@@ -78,8 +80,8 @@ class AttendanceService {
         };
       }
     } catch (e, stackTrace) {
-      debugPrint("❌ Mark Attendance Error: $e");
-      debugPrint("   Stack: $stackTrace");
+      // debugPrint("❌ Mark Attendance Error: $e");
+      // debugPrint("   Stack: $stackTrace");
       return {
         "success": false,
         "message": "Network error: ${e.toString()}",
@@ -101,15 +103,13 @@ class AttendanceService {
     try {
       final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.markAttendance);
 
-      final body = <String, dynamic>{
-        "student_id": studentId,
-      };
+      final body = <String, dynamic>{"student_id": studentId};
 
       if (classId != null && classId.isNotEmpty) {
         body["class_id"] = classId;
       }
 
-      debugPrint("📤 Mark Attendance Request: $body");
+      // debugPrint("📤 Mark Attendance Request: $body");
 
       final response = await http.post(
         url,
@@ -118,11 +118,15 @@ class AttendanceService {
       );
 
       final data = jsonDecode(response.body);
-      debugPrint("📥 Mark Attendance Response: ${response.statusCode}");
+      // debugPrint("📥 Mark Attendance Response: ${response.statusCode}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final attendanceResponse = AttendanceResponseModel.fromApiResponse(data);
-        final bool alreadyMarked = data["message"]?.toString().toLowerCase().contains('already') ?? false;
+        final attendanceResponse = AttendanceResponseModel.fromApiResponse(
+          data,
+        );
+        final bool alreadyMarked =
+            data["message"]?.toString().toLowerCase().contains('already') ??
+            false;
 
         return AttendanceResult(
           success: data["success"] ?? true,
@@ -138,7 +142,7 @@ class AttendanceService {
         );
       }
     } catch (e) {
-      debugPrint("❌ Mark Attendance Error: $e");
+      // debugPrint("❌ Mark Attendance Error: $e");
       return AttendanceResult(
         success: false,
         message: "Network error: ${e.toString()}",
@@ -156,14 +160,15 @@ class AttendanceService {
     required List<Map<String, dynamic>> attendanceList,
   }) async {
     try {
-      final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.markBulkAttendance);
+      final url = Uri.parse(
+        ApiConstants.baseUrl + ApiConstants.markBulkAttendance,
+      );
 
-      final body = {
-        "class_id": classId,
-        "attendance": attendanceList,
-      };
+      final body = {"class_id": classId, "attendance": attendanceList};
 
-      debugPrint("📤 Bulk Attendance Request: ${attendanceList.length} students");
+      debugPrint(
+        "📤 Bulk Attendance Request: ${attendanceList.length} students",
+      );
 
       final response = await http.post(
         url,
@@ -222,25 +227,27 @@ class AttendanceService {
         queryParams['section'] = section;
       }
 
-      final uri = Uri.parse(ApiConstants.baseUrl + ApiConstants.getTodayAttendance)
-          .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+      final uri = Uri.parse(
+        ApiConstants.baseUrl + ApiConstants.getTodayAttendance,
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
       debugPrint("📤 Get Today Attendance: $uri");
 
       final response = await http.get(
         uri,
         headers: {
-        'Content-Type': 'application/json',  // ✅ THIS WAS MISSING!
-        'Accept': 'application/json',
-      },
+          'Content-Type': 'application/json', // ✅ THIS WAS MISSING!
+          'Accept': 'application/json',
+        },
       );
 
       final data = jsonDecode(response.body);
       debugPrint("📥 Today Attendance Response: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        final List<dynamic> attendanceList = data['data'] ?? data['attendance'] ?? [];
-        
+        final List<dynamic> attendanceList =
+            data['data'] ?? data['attendance'] ?? [];
+
         // Parse attendance records
         final records = attendanceList
             .map((json) => AttendanceResponseModel.fromJson(json))
@@ -283,9 +290,7 @@ class AttendanceService {
     String? section,
   }) async {
     try {
-      final queryParams = <String, String>{
-        'date': date,
-      };
+      final queryParams = <String, String>{'date': date};
       if (classId != null && classId.isNotEmpty) {
         queryParams['class_id'] = classId;
       }
@@ -293,8 +298,9 @@ class AttendanceService {
         queryParams['section'] = section;
       }
 
-      final uri = Uri.parse(ApiConstants.baseUrl + ApiConstants.getAttendance)
-          .replace(queryParameters: queryParams);
+      final uri = Uri.parse(
+        ApiConstants.baseUrl + ApiConstants.getAttendance,
+      ).replace(queryParameters: queryParams);
 
       debugPrint("📤 Get Attendance By Date: $uri");
 
@@ -307,7 +313,8 @@ class AttendanceService {
       debugPrint("📥 Attendance By Date Response: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        final List<dynamic> attendanceList = data['data'] ?? data['attendance'] ?? [];
+        final List<dynamic> attendanceList =
+            data['data'] ?? data['attendance'] ?? [];
 
         return AttendanceListResult(
           success: true,
@@ -325,82 +332,175 @@ class AttendanceService {
       }
     } catch (e) {
       debugPrint("❌ Get Attendance By Date Error: $e");
-      return AttendanceListResult(
-        success: false,
-        message: "Network error: $e",
-      );
+      return AttendanceListResult(success: false, message: "Network error: $e");
     }
   }
 
   // ══════════════════════════════════════════════════════════
   // GET ATTENDANCE HISTORY - FIXED
   // ══════════════════════════════════════════════════════════
-  static Future<AttendanceHistoryResult> getAttendanceHistory({
-    required String token,
-    String? startDate,
-    String? endDate,
-    String? classId,
-    String? section,
-    String? studentId,
-    int page = 1,
-    int limit = 50,
-  }) async {
+// static Future<AttendanceHistoryResult> getAttendanceHistory({
+//   String? startDate,
+//   String? endDate,
+//   String? classId,
+//   String? section,
+//   String? studentId,
+//   int page = 1,
+//   int limit = 50,
+// }) async {
+//   try {
+//     final queryParams = <String, String>{
+//       'page': page.toString(),
+//       'limit': limit.toString(),
+//     };
+//     if (startDate != null) queryParams['start_date'] = startDate;
+//     if (endDate != null) queryParams['end_date'] = endDate;
+//     if (classId != null && classId.isNotEmpty) {
+//       queryParams['class_id'] = classId;
+//     }
+//     if (section != null && section.isNotEmpty && section != 'All') {
+//       queryParams['section'] = section;
+//     }
+//     if (studentId != null && studentId.isNotEmpty) {
+//       queryParams['student_id'] = studentId;
+//     }
+
+//     final uri = Uri.parse(
+//       ApiConstants.baseUrl + ApiConstants.getTodayAttendance,
+//     ).replace(queryParameters: queryParams);
+
+//     // debugPrint("📤 Get Attendance History: $uri");
+
+//     final response = await http.get(
+//       uri,
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Accept': 'application/json',
+//       },
+//     );
+
+//     final data = jsonDecode(response.body);
+//     // debugPrint("📥 Attendance History Response: $data");
+
+//     // API success is by res_code, not HTTP status/message keys
+//     final int resCode = data['res_code'] ?? response.statusCode;
+
+//     if (resCode == 200) {
+//       final List<dynamic> attendanceList = data['data'] ?? [];
+
+//       return AttendanceHistoryResult(
+//         success: true,
+//         message: data['response'] ?? 'History fetched',
+//         records: attendanceList
+//             .map<AttendanceResponseModel>(
+//               (json) => AttendanceResponseModel.fromJson(json),
+//             )
+//             .toList(),
+        
+//       );
+//     } else {
+//       return AttendanceHistoryResult(
+//         success: false,
+//         message: data['response'] ?? 'Failed to fetch history',
+//       );
+//     }
+//   } catch (e) {
+//     // debugPrint("❌ Get Attendance History Error: $e");
+//     return AttendanceHistoryResult(
+//       success: false,
+//       message: "Network error: $e",
+//     );
+//   }
+// }
+
+static Future<AttendanceHistoryResult> getAttendanceHistory({
+  String? startDate,
+  String? endDate,
+  String? classId,
+  String? section,
+  String? studentId,
+  int page = 1,
+  int limit = 50,
+}) async {
+  try {
+    final queryParams = <String, String>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+    if (startDate != null) queryParams['start_date'] = startDate;
+    if (endDate != null) queryParams['end_date'] = endDate;
+    if (classId != null && classId.isNotEmpty) {
+      queryParams['class_id'] = classId;
+    }
+    if (section != null && section.isNotEmpty && section != 'All') {
+      queryParams['section'] = section;
+    }
+    if (studentId != null && studentId.isNotEmpty) {
+      queryParams['student_id'] = studentId;
+    }
+
+    final uri = Uri.parse(
+      ApiConstants.baseUrl + ApiConstants.getTodayAttendance,
+    ).replace(queryParameters: queryParams);
+
+    debugPrint("📤 Get Attendance History: $uri");
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+
+    // ✅ Safe JSON decode
+    Map<String, dynamic> data;
     try {
-      final queryParams = <String, String>{
-        'page': page.toString(),
-        'limit': limit.toString(),
-      };
-      if (startDate != null) queryParams['start_date'] = startDate;
-      if (endDate != null) queryParams['end_date'] = endDate;
-      if (classId != null && classId.isNotEmpty) {
-        queryParams['class_id'] = classId;
-      }
-      if (section != null && section.isNotEmpty && section != 'All') {
-        queryParams['section'] = section;
-      }
-      if (studentId != null && studentId.isNotEmpty) {
-        queryParams['student_id'] = studentId;
-      }
-
-      final uri = Uri.parse(ApiConstants.baseUrl + ApiConstants.getAttendanceHistory)
-          .replace(queryParameters: queryParams);
-
-      debugPrint("📤 Get Attendance History: $uri");
-
-      final response = await http.get(
-        uri,
-        headers: ApiConstants.authHeaders(token),
-      );
-
-      final data = jsonDecode(response.body);
-      debugPrint("📥 Attendance History Response: ${response.statusCode}");
-
-      if (response.statusCode == 200) {
-        final List<dynamic> attendanceList = data['data'] ?? data['attendance'] ?? [];
-
-        return AttendanceHistoryResult(
-          success: true,
-          message: data["message"] ?? "History fetched",
-          records: attendanceList
-              .map((json) => AttendanceResponseModel.fromJson(json))
-              .toList(),
-          pagination: PaginationInfo.fromJson(data["pagination"] ?? {}),
-          stats: AttendanceStats.fromJson(data["stats"] ?? {}),
-        );
-      } else {
-        return AttendanceHistoryResult(
-          success: false,
-          message: data["message"] ?? "Failed to fetch history",
-        );
-      }
+      data = jsonDecode(response.body);
     } catch (e) {
-      debugPrint("❌ Get Attendance History Error: $e");
       return AttendanceHistoryResult(
         success: false,
-        message: "Network error: $e",
+        message: "Invalid JSON response",
       );
     }
+    
+    debugPrint("📥 Attendance History Response: $data");
+
+    final int resCode = data['res_code'] ?? response.statusCode;
+
+    if (resCode == 200) {
+      final List<dynamic> attendanceList = data['data'] ?? [];
+      
+      // ✅ Parse each record with error handling
+      final records = <AttendanceResponseModel>[];
+      for (var json in attendanceList) {
+        try {
+          records.add(AttendanceResponseModel.fromJson(json));
+        } catch (e) {
+          debugPrint("⚠️ Failed to parse record: $e");
+          // Continue parsing other records
+        }
+      }
+
+      return AttendanceHistoryResult(
+        success: true,
+        message: data['response'] ?? 'History fetched',
+        records: records,
+      );
+    } else {
+      return AttendanceHistoryResult(
+        success: false,
+        message: data['response'] ?? 'Failed to fetch history',
+      );
+    }
+  } catch (e) {
+    debugPrint("❌ Get Attendance History Error: $e");
+    return AttendanceHistoryResult(
+      success: false,
+      message: "Network error: $e",
+    );
   }
+}
 
   // ══════════════════════════════════════════════════════════
   // GET STUDENTS FOR ATTENDANCE
@@ -412,16 +512,15 @@ class AttendanceService {
     String? date,
   }) async {
     try {
-      final queryParams = <String, String>{
-        'class_id': classId,
-      };
+      final queryParams = <String, String>{'class_id': classId};
       if (section != null && section.isNotEmpty && section != 'All') {
         queryParams['section'] = section;
       }
       if (date != null) queryParams['date'] = date;
 
-      final uri = Uri.parse(ApiConstants.baseUrl + ApiConstants.getStudentsForAttendance)
-          .replace(queryParameters: queryParams);
+      final uri = Uri.parse(
+        ApiConstants.baseUrl + ApiConstants.getStudentsForAttendance,
+      ).replace(queryParameters: queryParams);
 
       debugPrint("📤 Get Students For Attendance: $uri");
 
@@ -434,12 +533,18 @@ class AttendanceService {
       debugPrint("📥 Students For Attendance Response: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        final List<dynamic> studentsList = data['data'] ?? data['students'] ?? [];
+        final List<dynamic> studentsList =
+            data['data'] ?? data['students'] ?? [];
         final List<dynamic> alreadyMarkedList = data['alreadyMarked'] ?? [];
 
         // Parse already marked student IDs
         final Set<String> markedStudentIds = alreadyMarkedList
-            .map((item) => item is Map ? item['student_id']?.toString() ?? item['studentId']?.toString() : item.toString())
+            .map(
+              (item) => item is Map
+                  ? item['student_id']?.toString() ??
+                        item['studentId']?.toString()
+                  : item.toString(),
+            )
             .whereType<String>()
             .toSet();
 
@@ -497,8 +602,9 @@ class AttendanceService {
       if (startDate != null) queryParams['start_date'] = startDate;
       if (endDate != null) queryParams['end_date'] = endDate;
 
-      final uri = Uri.parse(ApiConstants.baseUrl + ApiConstants.getAttendanceStats)
-          .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+      final uri = Uri.parse(
+        ApiConstants.baseUrl + ApiConstants.getAttendanceStats,
+      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
       debugPrint("📤 Get Attendance Stats: $uri");
 
@@ -562,7 +668,8 @@ class AttendanceResult {
   });
 
   @override
-  String toString() => 'AttendanceResult(success: $success, message: $message, '
+  String toString() =>
+      'AttendanceResult(success: $success, message: $message, '
       'alreadyMarked: $alreadyMarked, attendance: $attendance)';
 }
 
@@ -691,16 +798,22 @@ class AttendanceStats {
   });
 
   factory AttendanceStats.fromJson(Map<String, dynamic> json) {
-    final total = json['total_students'] ?? json['totalStudents'] ?? json['total'] ?? 0;
-    final present = json['present_count'] ?? json['presentCount'] ?? json['present'] ?? 0;
-    final absent = json['absent_count'] ?? json['absentCount'] ?? json['absent'] ?? 0;
+    final total =
+        json['total_students'] ?? json['totalStudents'] ?? json['total'] ?? 0;
+    final present =
+        json['present_count'] ?? json['presentCount'] ?? json['present'] ?? 0;
+    final absent =
+        json['absent_count'] ?? json['absentCount'] ?? json['absent'] ?? 0;
     final late = json['late_count'] ?? json['lateCount'] ?? json['late'] ?? 0;
-    final excused = json['excused_count'] ?? json['excusedCount'] ?? json['excused'] ?? 0;
+    final excused =
+        json['excused_count'] ?? json['excusedCount'] ?? json['excused'] ?? 0;
 
-    double percentage = json['attendance_percentage'] ?? 
-                        json['attendancePercentage'] ?? 
-                        json['percentage'] ?? 0.0;
-    
+    double percentage =
+        json['attendance_percentage'] ??
+        json['attendancePercentage'] ??
+        json['percentage'] ??
+        0.0;
+
     // Calculate if not provided
     if (percentage == 0 && total > 0) {
       percentage = ((present + late) / total) * 100;
@@ -708,11 +821,19 @@ class AttendanceStats {
 
     return AttendanceStats(
       totalStudents: total is int ? total : int.tryParse(total.toString()) ?? 0,
-      presentCount: present is int ? present : int.tryParse(present.toString()) ?? 0,
-      absentCount: absent is int ? absent : int.tryParse(absent.toString()) ?? 0,
+      presentCount: present is int
+          ? present
+          : int.tryParse(present.toString()) ?? 0,
+      absentCount: absent is int
+          ? absent
+          : int.tryParse(absent.toString()) ?? 0,
       lateCount: late is int ? late : int.tryParse(late.toString()) ?? 0,
-      excusedCount: excused is int ? excused : int.tryParse(excused.toString()) ?? 0,
-      attendancePercentage: percentage is double ? percentage : double.tryParse(percentage.toString()) ?? 0.0,
+      excusedCount: excused is int
+          ? excused
+          : int.tryParse(excused.toString()) ?? 0,
+      attendancePercentage: percentage is double
+          ? percentage
+          : double.tryParse(percentage.toString()) ?? 0.0,
     );
   }
 
@@ -726,7 +847,8 @@ class AttendanceStats {
   };
 
   @override
-  String toString() => 'AttendanceStats(total: $totalStudents, present: $presentCount, '
+  String toString() =>
+      'AttendanceStats(total: $totalStudents, present: $presentCount, '
       'absent: $absentCount, late: $lateCount, percentage: ${attendancePercentage.toStringAsFixed(1)}%)';
 }
 
@@ -747,20 +869,29 @@ class PaginationInfo {
   });
 
   factory PaginationInfo.fromJson(Map<String, dynamic> json) {
-    final current = json['current_page'] ?? json['currentPage'] ?? json['page'] ?? 1;
-    final total = json['total_pages'] ?? json['totalPages'] ?? json['pages'] ?? 1;
-    final items = json['total_items'] ?? json['totalItems'] ?? json['total'] ?? 0;
-    final perPage = json['items_per_page'] ?? json['itemsPerPage'] ?? json['limit'] ?? 50;
+    final current =
+        json['current_page'] ?? json['currentPage'] ?? json['page'] ?? 1;
+    final total =
+        json['total_pages'] ?? json['totalPages'] ?? json['pages'] ?? 1;
+    final items =
+        json['total_items'] ?? json['totalItems'] ?? json['total'] ?? 0;
+    final perPage =
+        json['items_per_page'] ?? json['itemsPerPage'] ?? json['limit'] ?? 50;
 
     return PaginationInfo(
-      currentPage: current is int ? current : int.tryParse(current.toString()) ?? 1,
+      currentPage: current is int
+          ? current
+          : int.tryParse(current.toString()) ?? 1,
       totalPages: total is int ? total : int.tryParse(total.toString()) ?? 1,
       totalItems: items is int ? items : int.tryParse(items.toString()) ?? 0,
-      itemsPerPage: perPage is int ? perPage : int.tryParse(perPage.toString()) ?? 50,
+      itemsPerPage: perPage is int
+          ? perPage
+          : int.tryParse(perPage.toString()) ?? 50,
       hasMore: json['has_more'] ?? json['hasMore'] ?? (current < total),
     );
   }
 
   @override
-  String toString() => 'PaginationInfo(page: $currentPage/$totalPages, total: $totalItems)';
+  String toString() =>
+      'PaginationInfo(page: $currentPage/$totalPages, total: $totalItems)';
 }

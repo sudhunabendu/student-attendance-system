@@ -11,7 +11,7 @@ import '../services/student_service.dart';
 import '../app/theme/app_theme.dart';
 import '../app/utils/qr_helper.dart';
 
-class QRScannerController extends GetxController {
+class TeacherQrScannerController extends GetxController {
   // ══════════════════════════════════════════════════════════
   // DEPENDENCIES
   // ══════════════════════════════════════════════════════════
@@ -408,12 +408,11 @@ class QRScannerController extends GetxController {
         final checkOutTimeStr =
             result['checkOutTime'] ?? result['data']?['check_out_time'];
 
-        if (checkInTimeStr is String && checkInTimeStr.isNotEmpty) {
-          checkInTime = DateTime.parse(checkInTimeStr);
+        if (checkInTimeStr != null) {
+          checkInTime = DateTime.tryParse(checkInTimeStr);
         }
-
-        if (checkOutTimeStr is String && checkOutTimeStr.isNotEmpty) {
-          checkOutTime = DateTime.parse(checkOutTimeStr);
+        if (checkOutTimeStr != null) {
+          checkOutTime = DateTime.tryParse(checkOutTimeStr);
         }
 
         // Handle specific actions from backend
@@ -470,16 +469,10 @@ class QRScannerController extends GetxController {
         );
         // You can decide whether to still add locally or not
       }
-    } catch (e, stack) {
-      debugPrint('Attendance error: $e');
-      debugPrintStack(stackTrace: stack);
+    } catch (e) {
       // API Error (network, etc.)
-      // _showWarning('Network Error', 'Could not reach server. Saved locally.');
+      _showWarning('Network Error', 'Could not reach server. Saved locally.');
       // You keep serverSuccess = false and fall through to local save
-      _showWarning(
-        'Error',
-        'Attendance saved on server but app failed to process response.',
-      );
     }
 
     // -------------------------
@@ -540,133 +533,60 @@ class QRScannerController extends GetxController {
     }
   }
 
-  // void _showAttendanceSuccess(
-  //   String studentName,
-  //   String status,
-  //   bool synced, {
-  //   String action = 'check_in',
-  // }) {
-  //   String title;
-  //   String message;
-  //   Color bgColor;
-
-  //   if (action == 'check_out') {
-  //     // CHECK-OUT UI
-  //     title = '✓ Checkout';
-  //     message = '$studentName checked out successfully';
-  //     bgColor = Colors.purple;
-  //   } else {
-  //     // CHECK-IN or others
-  //     if (status == 'late') {
-  //       title = '⏰ Late';
-  //       message = '$studentName marked as LATE';
-  //       bgColor = Colors.orange;
-  //     } else if (status == 'present') {
-  //       title = '✓ Present';
-  //       message = '$studentName marked present';
-  //       bgColor = Colors.green;
-  //     } else {
-  //       title = '✓ Marked';
-  //       message = '$studentName marked as ${status.toUpperCase()}';
-  //       bgColor = Colors.blue;
-  //     }
-  //   }
-
-  //   if (!synced) {
-  //     message += ' (pending sync)';
-  //     bgColor = Colors.blue;
-  //   }
-
-  //   Get.snackbar(
-  //     title,
-  //     message,
-  //     snackPosition: SnackPosition.TOP,
-  //     backgroundColor: bgColor,
-  //     colorText: Colors.white,
-  //     duration: const Duration(seconds: 2),
-  //     margin: const EdgeInsets.all(16),
-  //     borderRadius: 12,
-  //     icon: Icon(
-  //       (action == 'check_out')
-  //           ? Icons.exit_to_app
-  //           : (status == 'late' ? Icons.access_time : Icons.check_circle),
-  //       color: Colors.white,
-  //     ),
-  //   );
-  // }
-
   void _showAttendanceSuccess(
-  String studentName,
-  String status,
-  bool synced, {
-  String action = 'check_in',
-}) {
-  // -----------------------------
-  // Normalize inputs (VERY IMPORTANT)
-  // -----------------------------
-  final normalizedAction = action.trim().toLowerCase();
-  final normalizedStatus = status.trim().toLowerCase();
+    String studentName,
+    String status,
+    bool synced, {
+    String action = 'check_in',
+  }) {
+    String title;
+    String message;
+    Color bgColor;
 
-  String title;
-  String message;
-  Color bgColor;
-  IconData icon;
-
-  // -----------------------------
-  // CHECK-OUT (ALWAYS PRIORITY)
-  // -----------------------------
-  if (normalizedAction == 'check_out') {
-    title = '✓ Checkout';
-    message = '$studentName checked out successfully';
-    bgColor = Colors.purple;
-    icon = Icons.exit_to_app;
-  }
-  // -----------------------------
-  // CHECK-IN
-  // -----------------------------
-  else {
-    if (normalizedStatus == 'late') {
-      title = '⏰ Late';
-      message = '$studentName marked as LATE';
-      bgColor = Colors.orange;
-      icon = Icons.access_time;
-    } else if (normalizedStatus == 'present') {
-      title = '✓ Present';
-      message = '$studentName marked present';
-      bgColor = Colors.green;
-      icon = Icons.check_circle;
+    if (action == 'check_out') {
+      // CHECK-OUT UI
+      title = '✓ Checkout';
+      message = '$studentName checked out successfully';
+      bgColor = Colors.purple;
     } else {
-      title = '✓ Marked';
-      message = '$studentName marked as ${normalizedStatus.toUpperCase()}';
-      bgColor = Colors.blue;
-      icon = Icons.info;
+      // CHECK-IN or others
+      if (status == 'late') {
+        title = '⏰ Late';
+        message = '$studentName marked as LATE';
+        bgColor = Colors.orange;
+      } else if (status == 'present') {
+        title = '✓ Present';
+        message = '$studentName marked present';
+        bgColor = Colors.green;
+      } else {
+        title = '✓ Marked';
+        message = '$studentName marked as ${status.toUpperCase()}';
+        bgColor = Colors.blue;
+      }
     }
+
+    if (!synced) {
+      message += ' (pending sync)';
+      bgColor = Colors.blue;
+    }
+
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: bgColor,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+      icon: Icon(
+        (action == 'check_out')
+            ? Icons.exit_to_app
+            : (status == 'late' ? Icons.access_time : Icons.check_circle),
+        color: Colors.white,
+      ),
+    );
   }
-
-  // -----------------------------
-  // OFFLINE / NOT SYNCED
-  // -----------------------------
-  if (!synced) {
-    message += ' (pending sync)';
-    bgColor = Colors.blueGrey;
-  }
-
-  // -----------------------------
-  // SHOW SNACKBAR
-  // -----------------------------
-  Get.snackbar(
-    title,
-    message,
-    snackPosition: SnackPosition.TOP,
-    backgroundColor: bgColor,
-    colorText: Colors.white,
-    duration: const Duration(seconds: 2),
-    margin: const EdgeInsets.all(16),
-    borderRadius: 12,
-    icon: Icon(icon, color: Colors.white),
-  );
-}
-
 
   // ══════════════════════════════════════════════════════════
   // SCANNER CONTROLS

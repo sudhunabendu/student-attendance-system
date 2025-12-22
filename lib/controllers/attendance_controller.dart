@@ -137,7 +137,7 @@
 
 // lib/controllers/attendance_controller.dart
 import 'dart:async';
-import 'package:flutter/foundation.dart'; // ✅ Add this import
+// import 'package:flutter/foundation.dart'; // ✅ Add this import
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/student_model.dart';
@@ -171,7 +171,6 @@ class AttendanceController extends GetxController {
   
   // ✅ Add attendance records list
   final attendanceRecords = <AttendanceResponseModel>[].obs;
-
   // ══════════════════════════════════════════════════════════
   // OBSERVABLES - Filters
   // ══════════════════════════════════════════════════════════
@@ -270,17 +269,15 @@ class AttendanceController extends GetxController {
     errorMessage.value = '';
 
       try {
-      if (isAuthenticated) {
+      
         // ✅ Use typed result
         final result = await AttendanceService.getAttendanceHistory(
-          token: _authToken!,
           startDate: startDate,
           endDate: endDate,
           classId: selectedClassId.value.isNotEmpty ? selectedClassId.value : null,
-          section: selectedSection.value,
           studentId: studentId,
         );
-
+        // print("Fetched attendance history: $result");
         // ✅ Access properties directly
         if (result.success) {
           // Convert AttendanceResponseModel to AttendanceModel if needed
@@ -293,7 +290,7 @@ class AttendanceController extends GetxController {
               studentClassName: record.className ?? '',
               studentSection: '',
               date: record.date ?? DateTime.now(),
-              status: AttendanceStatus.values.byName(record.status),
+              status: _parseAttendanceStatus(record.status),
               checkInTime: record.checkInTime,
               createdAt: record.createdAt,
             )
@@ -304,9 +301,7 @@ class AttendanceController extends GetxController {
           debugPrint('❌ ${result.message}');
           _loadMockAttendanceHistory();
         }
-      } else {
-        _loadMockAttendanceHistory();
-      }
+      
     } catch (e) {
       _showErrorSnackbar('Failed to fetch history: $e');
       _loadMockAttendanceHistory();
@@ -314,63 +309,81 @@ class AttendanceController extends GetxController {
       isLoadingHistory.value = false;
     }
   }
+
+  /// ✅ Safe enum parsing with fallback
+AttendanceStatus _parseAttendanceStatus(String? status) {
+  if (status == null || status.isEmpty) {
+    return AttendanceStatus.absent;
+  }
+  
+  switch (status.toLowerCase().trim()) {
+    case 'present':
+      return AttendanceStatus.present;
+    case 'absent':
+      return AttendanceStatus.absent;
+    case 'late':
+      return AttendanceStatus.late;
+    case 'excused':
+      return AttendanceStatus.excused;
+   // If you have this enum value
+    default:
+      debugPrint('⚠️ Unknown attendance status: $status, defaulting to absent');
+      return AttendanceStatus.absent;
+  }
+}
 
 
   // ══════════════════════════════════════════════════════════
   // FETCH ATTENDANCE HISTORY
   // ══════════════════════════════════════════════════════════
    Future<void> fetchAttendanceHistory({
-    String? startDate,
-    String? endDate,
-    String? studentId,
-  }) async {
-    isLoadingHistory.value = true;
+  String? startDate,
+  String? endDate,
+  String? studentId,
+}) async {
+  isLoadingHistory.value = true;
 
-    try {
-      if (isAuthenticated) {
-        // ✅ Use typed result
-        final result = await AttendanceService.getAttendanceHistory(
-          token: _authToken!,
-          startDate: startDate,
-          endDate: endDate,
-          classId: selectedClassId.value.isNotEmpty ? selectedClassId.value : null,
-          section: selectedSection.value,
-          studentId: studentId,
+  try {
+    final result = await AttendanceService.getAttendanceHistory(
+      startDate: startDate,
+      endDate: endDate,
+      classId: selectedClassId.value.isNotEmpty ? selectedClassId.value : null,
+      section: selectedSection.value,
+      studentId: studentId,
+    );
+
+    if (result.success) {
+      attendanceHistory.value = result.records.map((record) {
+        return AttendanceModel(
+          id: record.attendanceId ?? '',
+          studentId: record.studentId ?? '',                    // ✅ Getter already handles null
+          studentName: record.fullName.isNotEmpty 
+              ? record.fullName 
+              : 'Unknown',                                // ✅ Fallback for empty name
+          studentRollNumber: record.rollNumber,           // ✅ Getter already handles null
+          studentClassName: record.className,             // ✅ Getter already handles null
+          studentSection: '',
+          date: record.date ?? DateTime.now(),
+          status: _parseAttendanceStatus(record.status),  // ✅ Safe parsing
+          checkInTime: record.checkInTime,
+          createdAt: record.createdAt,
         );
-
-        // ✅ Access properties directly
-        if (result.success) {
-          // Convert AttendanceResponseModel to AttendanceModel if needed
-          attendanceHistory.value = result.records.map((record) => 
-            AttendanceModel(
-              id: record.attendanceId ?? '',
-              studentId: record.studentId ?? '',
-              studentName: record.fullName,
-              studentRollNumber: record.rollNumber ?? '',
-              studentClassName: record.className ?? '',
-              studentSection: '',
-              date: record.date ?? DateTime.now(),
-              status: AttendanceStatus.values.byName(record.status),
-              checkInTime: record.checkInTime,
-              createdAt: record.createdAt,
-            )
-          ).toList();
-          
-          debugPrint('✅ Fetched ${result.records.length} history records');
-        } else {
-          debugPrint('❌ ${result.message}');
-          _loadMockAttendanceHistory();
-        }
-      } else {
-        _loadMockAttendanceHistory();
-      }
-    } catch (e) {
-      _showErrorSnackbar('Failed to fetch history: $e');
+      }).toList();
+      
+      debugPrint('✅ Fetched ${result.records.length} history records');
+    } else {
+      debugPrint('❌ ${result.message}');
       _loadMockAttendanceHistory();
-    } finally {
-      isLoadingHistory.value = false;
     }
+  } catch (e, stackTrace) {
+    debugPrint('❌ Failed to fetch history: $e');
+    debugPrint('📍 StackTrace: $stackTrace');
+    _showErrorSnackbar('Failed to fetch history');
+    _loadMockAttendanceHistory();
+  } finally {
+    isLoadingHistory.value = false;
   }
+}
 
   void _loadMockAttendanceHistory() {
     final statuses = [

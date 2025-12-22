@@ -14,7 +14,7 @@ class ApiConstants {
   static const String refreshToken = '/auth/refresh';
   static const String getAttendance = '/attendance';
   static const String getTodayAttendance = '/auth/get-today-attendance';
-  static const String getAttendanceHistory = '/attendance/history';
+  static const String getAttendanceHistory = '/auth/get-today-attendance';
   static const String getAttendanceStats = '/attendance/stats';
   static const String getStudentsByClass = '/attendance/students';
   static const String searchStudents = '/attendance/students';

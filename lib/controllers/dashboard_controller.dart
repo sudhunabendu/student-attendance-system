@@ -43,7 +43,7 @@ class DashboardController extends GetxController {
   // Carousel images - Add your image URLs here
   final List<Map<String, String>> carouselItems = [
     {
-      'image': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800',
+      'image': 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800',
       'title': 'Welcome to School',
       'subtitle': 'Excellence in Education',
     },
