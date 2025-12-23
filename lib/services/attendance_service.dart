@@ -18,75 +18,77 @@ class AttendanceService {
   }) async {
     try {
       final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.markAttendance);
-      // print("Mark Attendance URL: $url");
+
       final body = <String, dynamic>{"student_id": studentId};
-      // ✅ Debug: Print request details
-      // debugPrint("📤 Mark Attendance URL: $url");
-      // debugPrint("📤 Mark Attendance Body: ${jsonEncode(body)}");
+
       final response = await http.post(
         url,
         headers: {
-          'Content-Type': 'application/json', // ✅ THIS WAS MISSING!
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: jsonEncode(body),
       );
 
-      final data = jsonDecode(response.body);
-      // debugPrint("📥 Mark Attendance Response: $data");
+      final Map<String, dynamic> data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // ✅ Parse using AttendanceResponseModel
-        final attendanceResponse = AttendanceResponseModel.fromApiResponse(
-          data,
-        );
+        // ✅ Parse model (includes action)
+        final AttendanceResponseModel? attendance =
+            AttendanceResponseModel.fromApiResponse(data);
 
-        // Check if already marked
         final bool alreadyMarked =
             data["message"]?.toString().toLowerCase().contains('already') ??
             false;
 
         return {
           "success": data["success"] ?? true,
-          "message": data["message"] ?? "Attendance marked",
+          "message": data["message"] ?? "Attendance updated",
           "alreadyMarked": alreadyMarked,
-          // ✅ Use parsed model data
-          "attendanceId": attendanceResponse?.attendanceId,
-          "studentId": attendanceResponse?.studentId,
-          "studentName": attendanceResponse?.fullName,
-          "firstName": attendanceResponse?.firstName,
-          "lastName": attendanceResponse?.lastName,
-          "rollNumber": attendanceResponse?.rollNumber,
-          "email": attendanceResponse?.email,
-          "classId": attendanceResponse?.classId,
-          "className": attendanceResponse?.className,
-          "status": attendanceResponse?.status ?? status,
-          "checkInTime": attendanceResponse?.checkInTime,
-          "formattedCheckInTime": attendanceResponse?.formattedCheckInTime,
-          "date": attendanceResponse?.date,
-          "formattedDate": attendanceResponse?.formattedDate,
-          // ✅ Include the parsed model
-          "attendanceRecord": attendanceResponse,
-          // Raw data for reference
+
+          // ---- ACTION ----
+          "action": attendance?.action, // check_in / check_out
+          // ---- STUDENT ----
+          "attendanceId": attendance?.attendanceId,
+          "studentId": attendance?.studentId,
+          "studentName": attendance?.fullName,
+          "firstName": attendance?.firstName,
+          "lastName": attendance?.lastName,
+          "rollNumber": attendance?.rollNumber,
+          "email": attendance?.email,
+
+          // ---- CLASS ----
+          "classId": attendance?.classId,
+          "className": attendance?.className,
+
+          // ---- ATTENDANCE ----
+          "status": attendance?.status ?? status,
+          "checkInTime": attendance?.checkInTime,
+          "checkOutTime": attendance?.checkOutTime,
+          "formattedCheckInTime": attendance?.formattedCheckInTime,
+          "formattedDate": attendance?.formattedDate,
+
+          // ---- FULL OBJECT ----
+          "attendanceRecord": attendance,
+
+          // ---- RAW ----
           "data": data['data'],
         };
       } else {
         return {
           "success": false,
-          "message": data["message"] ?? "Something went wrong",
+          "message": data["message"] ?? "Failed to mark attendance",
           "error": data["error"],
-          "data": null,
           "attendanceRecord": null,
+          "data": null,
         };
       }
     } catch (e, stackTrace) {
-      // debugPrint("❌ Mark Attendance Error: $e");
-      // debugPrint("   Stack: $stackTrace");
       return {
         "success": false,
         "message": "Network error: ${e.toString()}",
-        "data": null,
         "attendanceRecord": null,
+        "data": null,
       };
     }
   }
@@ -339,168 +341,168 @@ class AttendanceService {
   // ══════════════════════════════════════════════════════════
   // GET ATTENDANCE HISTORY - FIXED
   // ══════════════════════════════════════════════════════════
-// static Future<AttendanceHistoryResult> getAttendanceHistory({
-//   String? startDate,
-//   String? endDate,
-//   String? classId,
-//   String? section,
-//   String? studentId,
-//   int page = 1,
-//   int limit = 50,
-// }) async {
-//   try {
-//     final queryParams = <String, String>{
-//       'page': page.toString(),
-//       'limit': limit.toString(),
-//     };
-//     if (startDate != null) queryParams['start_date'] = startDate;
-//     if (endDate != null) queryParams['end_date'] = endDate;
-//     if (classId != null && classId.isNotEmpty) {
-//       queryParams['class_id'] = classId;
-//     }
-//     if (section != null && section.isNotEmpty && section != 'All') {
-//       queryParams['section'] = section;
-//     }
-//     if (studentId != null && studentId.isNotEmpty) {
-//       queryParams['student_id'] = studentId;
-//     }
+  // static Future<AttendanceHistoryResult> getAttendanceHistory({
+  //   String? startDate,
+  //   String? endDate,
+  //   String? classId,
+  //   String? section,
+  //   String? studentId,
+  //   int page = 1,
+  //   int limit = 50,
+  // }) async {
+  //   try {
+  //     final queryParams = <String, String>{
+  //       'page': page.toString(),
+  //       'limit': limit.toString(),
+  //     };
+  //     if (startDate != null) queryParams['start_date'] = startDate;
+  //     if (endDate != null) queryParams['end_date'] = endDate;
+  //     if (classId != null && classId.isNotEmpty) {
+  //       queryParams['class_id'] = classId;
+  //     }
+  //     if (section != null && section.isNotEmpty && section != 'All') {
+  //       queryParams['section'] = section;
+  //     }
+  //     if (studentId != null && studentId.isNotEmpty) {
+  //       queryParams['student_id'] = studentId;
+  //     }
 
-//     final uri = Uri.parse(
-//       ApiConstants.baseUrl + ApiConstants.getTodayAttendance,
-//     ).replace(queryParameters: queryParams);
+  //     final uri = Uri.parse(
+  //       ApiConstants.baseUrl + ApiConstants.getTodayAttendance,
+  //     ).replace(queryParameters: queryParams);
 
-//     // debugPrint("📤 Get Attendance History: $uri");
+  //     // debugPrint("📤 Get Attendance History: $uri");
 
-//     final response = await http.get(
-//       uri,
-//       headers: {
-//         'Content-Type': 'application/json',
-//         'Accept': 'application/json',
-//       },
-//     );
+  //     final response = await http.get(
+  //       uri,
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Accept': 'application/json',
+  //       },
+  //     );
 
-//     final data = jsonDecode(response.body);
-//     // debugPrint("📥 Attendance History Response: $data");
+  //     final data = jsonDecode(response.body);
+  //     // debugPrint("📥 Attendance History Response: $data");
 
-//     // API success is by res_code, not HTTP status/message keys
-//     final int resCode = data['res_code'] ?? response.statusCode;
+  //     // API success is by res_code, not HTTP status/message keys
+  //     final int resCode = data['res_code'] ?? response.statusCode;
 
-//     if (resCode == 200) {
-//       final List<dynamic> attendanceList = data['data'] ?? [];
+  //     if (resCode == 200) {
+  //       final List<dynamic> attendanceList = data['data'] ?? [];
 
-//       return AttendanceHistoryResult(
-//         success: true,
-//         message: data['response'] ?? 'History fetched',
-//         records: attendanceList
-//             .map<AttendanceResponseModel>(
-//               (json) => AttendanceResponseModel.fromJson(json),
-//             )
-//             .toList(),
-        
-//       );
-//     } else {
-//       return AttendanceHistoryResult(
-//         success: false,
-//         message: data['response'] ?? 'Failed to fetch history',
-//       );
-//     }
-//   } catch (e) {
-//     // debugPrint("❌ Get Attendance History Error: $e");
-//     return AttendanceHistoryResult(
-//       success: false,
-//       message: "Network error: $e",
-//     );
-//   }
-// }
+  //       return AttendanceHistoryResult(
+  //         success: true,
+  //         message: data['response'] ?? 'History fetched',
+  //         records: attendanceList
+  //             .map<AttendanceResponseModel>(
+  //               (json) => AttendanceResponseModel.fromJson(json),
+  //             )
+  //             .toList(),
 
-static Future<AttendanceHistoryResult> getAttendanceHistory({
-  String? startDate,
-  String? endDate,
-  String? classId,
-  String? section,
-  String? studentId,
-  int page = 1,
-  int limit = 50,
-}) async {
-  try {
-    final queryParams = <String, String>{
-      'page': page.toString(),
-      'limit': limit.toString(),
-    };
-    if (startDate != null) queryParams['start_date'] = startDate;
-    if (endDate != null) queryParams['end_date'] = endDate;
-    if (classId != null && classId.isNotEmpty) {
-      queryParams['class_id'] = classId;
-    }
-    if (section != null && section.isNotEmpty && section != 'All') {
-      queryParams['section'] = section;
-    }
-    if (studentId != null && studentId.isNotEmpty) {
-      queryParams['student_id'] = studentId;
-    }
+  //       );
+  //     } else {
+  //       return AttendanceHistoryResult(
+  //         success: false,
+  //         message: data['response'] ?? 'Failed to fetch history',
+  //       );
+  //     }
+  //   } catch (e) {
+  //     // debugPrint("❌ Get Attendance History Error: $e");
+  //     return AttendanceHistoryResult(
+  //       success: false,
+  //       message: "Network error: $e",
+  //     );
+  //   }
+  // }
 
-    final uri = Uri.parse(
-      ApiConstants.baseUrl + ApiConstants.getTodayAttendance,
-    ).replace(queryParameters: queryParams);
-
-    debugPrint("📤 Get Attendance History: $uri");
-
-    final response = await http.get(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    );
-
-    // ✅ Safe JSON decode
-    Map<String, dynamic> data;
+  static Future<AttendanceHistoryResult> getAttendanceHistory({
+    String? startDate,
+    String? endDate,
+    String? classId,
+    String? section,
+    String? studentId,
+    int page = 1,
+    int limit = 50,
+  }) async {
     try {
-      data = jsonDecode(response.body);
-    } catch (e) {
-      return AttendanceHistoryResult(
-        success: false,
-        message: "Invalid JSON response",
-      );
-    }
-    
-    debugPrint("📥 Attendance History Response: $data");
-
-    final int resCode = data['res_code'] ?? response.statusCode;
-
-    if (resCode == 200) {
-      final List<dynamic> attendanceList = data['data'] ?? [];
-      
-      // ✅ Parse each record with error handling
-      final records = <AttendanceResponseModel>[];
-      for (var json in attendanceList) {
-        try {
-          records.add(AttendanceResponseModel.fromJson(json));
-        } catch (e) {
-          debugPrint("⚠️ Failed to parse record: $e");
-          // Continue parsing other records
-        }
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (startDate != null) queryParams['start_date'] = startDate;
+      if (endDate != null) queryParams['end_date'] = endDate;
+      if (classId != null && classId.isNotEmpty) {
+        queryParams['class_id'] = classId;
+      }
+      if (section != null && section.isNotEmpty && section != 'All') {
+        queryParams['section'] = section;
+      }
+      if (studentId != null && studentId.isNotEmpty) {
+        queryParams['student_id'] = studentId;
       }
 
-      return AttendanceHistoryResult(
-        success: true,
-        message: data['response'] ?? 'History fetched',
-        records: records,
+      final uri = Uri.parse(
+        ApiConstants.baseUrl + ApiConstants.getTodayAttendance,
+      ).replace(queryParameters: queryParams);
+
+      debugPrint("📤 Get Attendance History: $uri");
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       );
-    } else {
+
+      // ✅ Safe JSON decode
+      Map<String, dynamic> data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (e) {
+        return AttendanceHistoryResult(
+          success: false,
+          message: "Invalid JSON response",
+        );
+      }
+
+      debugPrint("📥 Attendance History Response: $data");
+
+      final int resCode = data['res_code'] ?? response.statusCode;
+
+      if (resCode == 200) {
+        final List<dynamic> attendanceList = data['data'] ?? [];
+
+        // ✅ Parse each record with error handling
+        final records = <AttendanceResponseModel>[];
+        for (var json in attendanceList) {
+          try {
+            records.add(AttendanceResponseModel.fromJson(json));
+          } catch (e) {
+            debugPrint("⚠️ Failed to parse record: $e");
+            // Continue parsing other records
+          }
+        }
+
+        return AttendanceHistoryResult(
+          success: true,
+          message: data['response'] ?? 'History fetched',
+          records: records,
+        );
+      } else {
+        return AttendanceHistoryResult(
+          success: false,
+          message: data['response'] ?? 'Failed to fetch history',
+        );
+      }
+    } catch (e) {
+      debugPrint("❌ Get Attendance History Error: $e");
       return AttendanceHistoryResult(
         success: false,
-        message: data['response'] ?? 'Failed to fetch history',
+        message: "Network error: $e",
       );
     }
-  } catch (e) {
-    debugPrint("❌ Get Attendance History Error: $e");
-    return AttendanceHistoryResult(
-      success: false,
-      message: "Network error: $e",
-    );
   }
-}
 
   // ══════════════════════════════════════════════════════════
   // GET STUDENTS FOR ATTENDANCE

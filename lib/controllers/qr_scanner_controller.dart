@@ -343,7 +343,7 @@ class QRScannerController extends GetxController {
 
       // ✅ Find student using API-aware method
       final student = await findStudentById(studentId);
-
+      // debugPrint('Found student: $student');
       if (student == null) {
         _showError('Not Found', 'No student found with ID: $studentId');
         isProcessing.value = false;
@@ -388,7 +388,7 @@ class QRScannerController extends GetxController {
 
       final bool success = result['success'] == true;
       action = result['action'] ?? 'check_in';
-
+      debugPrint('result: $result');
       if (success) {
         serverSuccess = true;
 
