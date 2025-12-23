@@ -1,13 +1,14 @@
-// lib/controllers/qr_scanner_controller.dart
+// lib/controllers/teacher_qr_scanner_controller.dart
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:vibration/vibration.dart';
-import '../models/student_model.dart';
-import '../models/attendance_model.dart';
-import '../services/attendance_service.dart';
+import '../models/teacher_model.dart';
+import '../models/teacher_attendance_model.dart';
+import '../services/teacher_attendance_service.dart';
 import '../services/storage_service.dart';
-import '../services/student_service.dart';
+import '../services/teacher_service.dart';
 import '../app/theme/app_theme.dart';
 import '../app/utils/qr_helper.dart';
 
@@ -31,15 +32,15 @@ class TeacherQrScannerController extends GetxController {
   // ══════════════════════════════════════════════════════════
   // LOADING STATES
   // ══════════════════════════════════════════════════════════
-  final isLoadingStudents = false.obs;
-  final studentsLoadError = ''.obs;
+  final isLoadingTeachers = false.obs;
+  final teachersLoadError = ''.obs;
 
   // ══════════════════════════════════════════════════════════
   // DATA
   // ══════════════════════════════════════════════════════════
-  final scannedStudents = <StudentModel>[].obs;
-  final todayAttendance = <AttendanceModel>[].obs;
-  final allStudents = <StudentModel>[].obs;
+  final scannedTeachers = <TeacherModel>[].obs;
+  final todayAttendance = <TeacherAttendanceModel>[].obs;
+  final allTeachers = <TeacherModel>[].obs;
   final selectedDate = DateTime.now().obs;
 
   // ══════════════════════════════════════════════════════════
@@ -60,11 +61,11 @@ class TeacherQrScannerController extends GetxController {
   String? get _authToken => _storageService.getToken();
   // bool get isAuthenticated => _authToken != null && _authToken!.isNotEmpty;
 
-  int get presentCount => scannedStudents.length;
-  int get totalStudents => allStudents.length;
+  int get presentCount => scannedTeachers.length;
+  int get totalTeachers => allTeachers.length;
 
   double get attendancePercentage =>
-      totalStudents > 0 ? (presentCount / totalStudents) * 100 : 0;
+      totalTeachers > 0 ? (presentCount / totalTeachers) * 100 : 0;
 
   String get formattedDate {
     final date = selectedDate.value;
@@ -98,12 +99,12 @@ class TeacherQrScannerController extends GetxController {
   Future<void> _initController() async {
     initScanner();
 
-    // Load students from API
-    await loadStudentsFromAPI();
+    // Load teachers from API
+    await loadTeachersFromAPI();
     await fetchTodayAttendance();
 
     // Fallback to mock data if not authenticated
-    _loadMockStudents();
+    _loadMockTeachers();
   }
 
   // ══════════════════════════════════════════════════════════
@@ -127,75 +128,75 @@ class TeacherQrScannerController extends GetxController {
   }
 
   // ══════════════════════════════════════════════════════════
-  // LOAD STUDENTS FROM API
+  // LOAD TEACHER FROM API
   // ══════════════════════════════════════════════════════════
-  Future<void> loadStudentsFromAPI() async {
-    isLoadingStudents.value = true;
-    studentsLoadError.value = '';
+  Future<void> loadTeachersFromAPI() async {
+    isLoadingTeachers.value = true;
+    teachersLoadError.value = '';
 
     try {
-      // debugPrint('Fetching students from API...');
+      // debugPrint('Fetching teachers from API...');
 
-      final result = await StudentService.getAllStudents();
+      final result = await TeacherService.getAllteachers();
 
-      // debugPrint('Students API Response: success=${result['success']}');
+      // debugPrint('Teachers API Response: success=${result['success']}');
 
       if (result['success'] == true) {
-        // ✅ Students are already parsed as List<StudentModel>
-        final List<StudentModel> students = result['students'] ?? [];
+        // ✅ Teachers are already parsed as List<TeacherModel>
+        final List<TeacherModel> teachers = result['teachers'] ?? [];
 
-        allStudents.value = students;
+        allTeachers.value = teachers;
 
-        // debugPrint('✓ Loaded ${allStudents.length} students from API');
+        // debugPrint('✓ Loaded ${allTeachers.length} teachers from API');
       } else {
-        studentsLoadError.value =
-            result['message'] ?? 'Failed to load students';
-        // debugPrint('✗ Failed to load students: ${result['message']}');
+        teachersLoadError.value =
+            result['message'] ?? 'Failed to load teachers';
+        // debugPrint('✗ Failed to load teachers: ${result['message']}');
 
         // Fallback to mock data
-        _loadMockStudents();
+        _loadMockTeachers();
       }
     } catch (e, stackTrace) {
-      // debugPrint('✗ Error loading students: $e');
+      // debugPrint('✗ Error loading teachers: $e');
       // debugPrint('Stack trace: $stackTrace');
-      studentsLoadError.value = 'Error: $e';
+      // teachersLoadError.value = 'Error: $e';
 
       // Fallback to mock data
-      _loadMockStudents();
+      _loadMockTeachers();
     } finally {
-      isLoadingStudents.value = false;
+      isLoadingTeachers.value = false;
     }
   }
 
   // ══════════════════════════════════════════════════════════
-  // REFRESH STUDENTS
+  // REFRESH TEACHERS
   // ══════════════════════════════════════════════════════════
-  Future<void> refreshStudents() async {
-    await loadStudentsFromAPI();
+  Future<void> refreshTeachers() async {
+    await loadTeachersFromAPI();
 
-    if (studentsLoadError.value.isEmpty) {
-      _showInfo('Refreshed', 'Student list updated');
+    if (teachersLoadError.value.isEmpty) {
+      _showInfo('Refreshed', 'Teacher list updated');
     } else {
-      _showError('Error', studentsLoadError.value);
+      _showError('Error', teachersLoadError.value);
     }
   }
 
   // ══════════════════════════════════════════════════════════
-  // LOAD MOCK STUDENTS (Fallback)
+  // LOAD MOCK TEACHERS (Fallback)
   // ══════════════════════════════════════════════════════════
-  void _loadMockStudents() {
-    // debugPrint('Loading mock students as fallback...');
+  void _loadMockTeachers() {
+    // debugPrint('Loading mock teachers as fallback...');
 
-    allStudents.value = List.generate(
+    allTeachers.value = List.generate(
       50,
-      (index) => StudentModel(
+      (index) => TeacherModel(
         id: 'STU${index + 1}',
-        roleId: 'student',
+        roleId: 'teacher',
         gender: index % 2 == 0 ? 'Male' : 'Female',
-        firstName: 'Student',
+        firstName: 'Teacher',
         lastName: '${index + 1}',
-        roleNumber: '${2024}${(index + 1).toString().padLeft(3, '0')}',
-        email: 'student${index + 1}@school.com',
+        // roleNumber: '${2024}${(index + 1).toString().padLeft(3, '0')}',
+        email: 'teachers${index + 1}@school.com',
         mobileCode: '+91',
         mobileNumber: '98765${(index + 1).toString().padLeft(5, '0')}',
         mobileNumberVerified: true,
@@ -204,47 +205,47 @@ class TeacherQrScannerController extends GetxController {
       ),
     );
 
-    // debugPrint('Loaded ${allStudents.length} mock students');
+    // debugPrint('Loaded ${allTeachers.length} mock teachers');
   }
 
   // ══════════════════════════════════════════════════════════
-  // FIND STUDENT BY ID (API or Local)
+  // FIND Teacher BY ID (API or Local)
   // ══════════════════════════════════════════════════════════
-  Future<StudentModel?> findStudentById(String studentId) async {
+  Future<TeacherModel?> findTeacherById(String teacherId) async {
     // First, try to find in local list
-    StudentModel? student = allStudents.firstWhereOrNull(
-      (s) => s.id == studentId,
+    TeacherModel? teacher = allTeachers.firstWhereOrNull(
+      (s) => s.id == teacherId,
     );
 
-    if (student != null) {
-      // debugPrint('✓ Found student locally: ${student.name}');
-      return student;
+    if (teacher != null) {
+      // debugPrint('✓ Found teacher locally: ${teacher.name}');
+      return teacher;
     }
 
     // If not found locally, try API
     try {
-      // debugPrint('Student not found locally, fetching from API...');
+      // debugPrint('Teacher not found locally, fetching from API...');
 
-      final result = await StudentService.getStudentById(studentId: studentId);
+      final result = await TeacherService.getTeacherById(teacherId: teacherId);
 
       // debugPrint('API Result: $result');
 
-      if (result['success'] == true && result['student'] != null) {
-        // ✅ Student is already parsed as StudentModel in the service
-        student = result['student'] as StudentModel;
+      if (result['success'] == true && result['teacher'] != null) {
+        // ✅ teacher is already parsed as TeacherModel in the service
+        teacher = result['teacher'] as TeacherModel;
 
         // Add to local list if not already exists
-        if (!allStudents.any((s) => s.id == student!.id)) {
-          allStudents.add(student);
+        if (!allTeachers.any((s) => s.id == teacher!.id)) {
+          allTeachers.add(teacher);
         }
 
-        // debugPrint('✓ Found student from API: ${student.name}');
-        return student;
+        // debugPrint('✓ Found teacher from API: ${teacher.name}');
+        return teacher;
       } else {
-        // debugPrint('✗ Student not found: ${result['message']}');
+        // debugPrint('✗ Teacher not found: ${result['message']}');
       }
     } catch (e) {
-      // debugPrint('❌ Error fetching student by ID: $e');
+      // debugPrint('❌ Error fetching teacher by ID: $e');
     }
 
     return null;
@@ -255,25 +256,25 @@ class TeacherQrScannerController extends GetxController {
   // ══════════════════════════════════════════════════════════
   Future<void> fetchTodayAttendance() async {
     try {
-      final result = await AttendanceService.getTodayAttendance(
+      final result = await TeacherAttendanceService.getTodayAttendance(
         // token: _authToken!,
       );
 
       if (result['success'] == true) {
         todayAttendance.value = result['attendance'] ?? [];
 
-        // Mark already attended students
+        // Mark already attended teachers
         for (var attendance in todayAttendance) {
-          final student = allStudents.firstWhereOrNull(
-            (s) => s.id == attendance.studentId,
+          final teacher = allTeachers.firstWhereOrNull(
+            (s) => s.id == attendance.teacherId,
           );
-          if (student != null && !scannedStudents.contains(student)) {
-            final updatedStudent = student.copyWith(
+          if (teacher != null && !scannedTeachers.contains(teacher)) {
+            final updatedTeacher = teacher.copyWith(
               isPresent: true,
               isMarkedOnServer: true,
               attendanceStatus: attendance.status.name,
             );
-            scannedStudents.add(updatedStudent);
+            scannedTeachers.add(updatedTeacher);
           }
         }
       }
@@ -339,30 +340,30 @@ class TeacherQrScannerController extends GetxController {
         return;
       }
 
-      final studentId = qrData['id'] as String;
+      final teacherId = qrData['id'] as String;
 
-      // ✅ Find student using API-aware method
-      final student = await findStudentById(studentId);
+      // ✅ Find teacher using API-aware method
+      final teacher = await findTeacherById(teacherId);
 
-      if (student == null) {
-        _showError('Not Found', 'No student found with ID: $studentId');
+      if (teacher == null) {
+        _showError('Not Found', 'No teacher found with ID: $teacherId');
         isProcessing.value = false;
         return;
       }
 
       // Check if already scanned
-      final alreadyScanned = scannedStudents.any((s) => s.id == student.id);
+      final alreadyScanned = scannedTeachers.any((s) => s.id == teacher.id);
       if (alreadyScanned) {
         _showWarning(
           'Already Marked',
-          '${student.name} is already marked present.',
+          '${teacher.name} is already marked present.',
         );
         isProcessing.value = false;
         return;
       }
 
       // Mark attendance
-      await markAttendance(student);
+      await markAttendance(teacher);
     } catch (e) {
       _showError('Error', 'Failed to process QR code: $e');
       // debugPrint('QR process error: $e');
@@ -371,7 +372,7 @@ class TeacherQrScannerController extends GetxController {
     isProcessing.value = false;
   }
 
-  Future<void> markAttendance(StudentModel student) async {
+  Future<void> markAttendance(TeacherModel teacher) async {
     _vibrate();
 
     bool serverSuccess = false;
@@ -382,8 +383,8 @@ class TeacherQrScannerController extends GetxController {
     String action = 'check_in'; // default
 
     try {
-      final result = await AttendanceService.markAttendance(
-        studentId: student.id,
+      final result = await TeacherAttendanceService.markAttendance(
+        teacherId: teacher.id,
       );
 
       final bool success = result['success'] == true;
@@ -419,7 +420,7 @@ class TeacherQrScannerController extends GetxController {
         if (action == 'check_in') {
           // normal first scan
           _showAttendanceSuccess(
-            student.name,
+            teacher.name,
             markedStatus,
             serverSuccess,
             action: 'check_in',
@@ -427,7 +428,7 @@ class TeacherQrScannerController extends GetxController {
         } else if (action == 'check_out') {
           // successful checkout
           _showAttendanceSuccess(
-            student.name,
+            teacher.name,
             markedStatus,
             serverSuccess,
             action: 'check_out',
@@ -435,7 +436,7 @@ class TeacherQrScannerController extends GetxController {
         } else if (action == 'already_checked_out') {
           _showWarning(
             'Already Checked Out',
-            '${student.name} is already checked out for today.',
+            '${teacher.name} is already checked out for today.',
           );
           // Optionally, still record locally or just return
           return;
@@ -448,7 +449,7 @@ class TeacherQrScannerController extends GetxController {
         } else {
           // fallback
           _showAttendanceSuccess(
-            student.name,
+            teacher.name,
             markedStatus,
             serverSuccess,
             action: action,
@@ -458,7 +459,7 @@ class TeacherQrScannerController extends GetxController {
         // Handle non-success from server
         if (result['alreadyMarked'] == true) {
           // Old behavior if your backend still uses this flag somewhere
-          _showWarning('Already Marked', '${student.name} was already marked.');
+          _showWarning('Already Marked', '${teacher.name} was already marked.');
           return;
         }
 
@@ -482,21 +483,21 @@ class TeacherQrScannerController extends GetxController {
     // For check-out, you might want different handling, but
     // here I always create/update a local attendance record.
 
-    final updatedStudent = student.copyWith(
+    final updatedTeacher = teacher.copyWith(
       isPresent: true,
       isMarkedOnServer: serverSuccess,
       attendanceStatus: markedStatus,
     );
 
-    scannedStudents.add(updatedStudent);
+    scannedTeachers.add(updatedTeacher);
 
-    final attendance = AttendanceModel(
+    final attendance = TeacherAttendanceModel(
       id: attendanceId ?? 'LOCAL_${DateTime.now().millisecondsSinceEpoch}',
-      studentId: student.id,
-      studentName: student.name,
-      studentRollNumber: student.rollNumber,
-      studentClassName: student.className,
-      studentSection: student.section,
+      teacherId: teacher.id,
+      teacherName: teacher.name,
+      // teacherRollNumber: teacher.rollNumber,
+      // teacherClassName: teacher.className,
+      // teacherSection: teacher.section,
       date: DateTime.now(),
       status: AttendanceStatusExtension.fromString(markedStatus),
       checkInTime: checkInTime ?? DateTime.now(),
@@ -508,24 +509,24 @@ class TeacherQrScannerController extends GetxController {
 
     todayAttendance.add(attendance);
 
-    // Update list of all students
-    final index = allStudents.indexWhere((s) => s.id == student.id);
+    // Update list of all teachers
+    final index = allTeachers.indexWhere((s) => s.id == teacher.id);
     if (index != -1) {
-      allStudents[index] = updatedStudent;
+      allTeachers[index] = updatedTeacher;
     }
 
     // If we didn’t already show a message above based on action,
     // show a generic success here (can be removed if redundant).
     if (serverSuccess && (action != 'check_in' && action != 'check_out')) {
       _showAttendanceSuccess(
-        student.name,
+        teacher.name,
         markedStatus,
         serverSuccess,
         action: action,
       );
     } else if (!serverSuccess) {
       _showAttendanceSuccess(
-        student.name,
+        teacher.name,
         markedStatus,
         serverSuccess,
         action: action,
@@ -534,7 +535,7 @@ class TeacherQrScannerController extends GetxController {
   }
 
   void _showAttendanceSuccess(
-    String studentName,
+    String teacherName,
     String status,
     bool synced, {
     String action = 'check_in',
@@ -546,33 +547,33 @@ class TeacherQrScannerController extends GetxController {
     if (action == 'check_out') {
       // CHECK-OUT UI
       title = '✓ Checkout';
-      message = '$studentName checked out successfully';
+      // message = '$teacherName checked out successfully';
       bgColor = Colors.purple;
     } else {
       // CHECK-IN or others
       if (status == 'late') {
         title = '⏰ Late';
-        message = '$studentName marked as LATE';
+        message = '$teacherName marked as LATE';
         bgColor = Colors.orange;
       } else if (status == 'present') {
         title = '✓ Present';
-        message = '$studentName marked present';
+        message = '$teacherName marked present';
         bgColor = Colors.green;
       } else {
         title = '✓ Marked';
-        message = '$studentName marked as ${status.toUpperCase()}';
+        message = '$teacherName marked as ${status.toUpperCase()}';
         bgColor = Colors.blue;
       }
     }
 
-    if (!synced) {
-      message += ' (pending sync)';
-      bgColor = Colors.blue;
-    }
+    // if (!synced) {
+    //   message += ' (pending sync)';
+    //   bgColor = Colors.blue;
+    // }
 
     Get.snackbar(
       title,
-      message,
+      "message",
       snackPosition: SnackPosition.TOP,
       backgroundColor: bgColor,
       colorText: Colors.white,
@@ -630,32 +631,32 @@ class TeacherQrScannerController extends GetxController {
   }
 
   // ══════════════════════════════════════════════════════════
-  // CLEAR SCANNED STUDENTS
+  // CLEAR SCANNED TEACHERS
   // ══════════════════════════════════════════════════════════
-  void clearScannedStudents() {
+  void clearScannedTeachers() {
     Get.dialog(
       AlertDialog(
         title: const Text('Clear All'),
-        content: const Text('Clear all scanned students?'),
+        content: const Text('Clear all scanned teachers?'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               // Only clear locally scanned (not server synced)
-              final localOnly = scannedStudents
+              final localOnly = scannedTeachers
                   .where((s) => !s.isMarkedOnServer)
                   .map((s) => s.id)
                   .toList();
 
-              scannedStudents.removeWhere((s) => localOnly.contains(s.id));
+              scannedTeachers.removeWhere((s) => localOnly.contains(s.id));
               todayAttendance.removeWhere(
-                (a) => localOnly.contains(a.studentId),
+                (a) => localOnly.contains(a.teacherId),
               );
 
               for (var id in localOnly) {
-                final index = allStudents.indexWhere((s) => s.id == id);
+                final index = allTeachers.indexWhere((s) => s.id == id);
                 if (index != -1) {
-                  allStudents[index] = allStudents[index].copyWith(
+                  allTeachers[index] = allTeachers[index].copyWith(
                     isPresent: false,
                     attendanceStatus: 'absent',
                   );
@@ -683,12 +684,12 @@ class TeacherQrScannerController extends GetxController {
   // SAVE ATTENDANCE (Sync pending to server)
   // ══════════════════════════════════════════════════════════
   Future<void> saveAttendance() async {
-    // Get students not yet synced
-    final pendingStudents = scannedStudents
+    // Get teachers not yet synced
+    final pendingTeachers = scannedTeachers
         .where((s) => !s.isMarkedOnServer)
         .toList();
 
-    if (pendingStudents.isEmpty) {
+    if (pendingTeachers.isEmpty) {
       _showInfo('All Synced', 'All attendance is already saved.');
       return;
     }
@@ -696,13 +697,13 @@ class TeacherQrScannerController extends GetxController {
     Get.dialog(
       AlertDialog(
         title: const Text('Save Attendance'),
-        content: Text('Save ${pendingStudents.length} pending attendance?'),
+        content: Text('Save ${pendingTeachers.length} pending attendance?'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
               Get.back();
-              await _syncPendingAttendance(pendingStudents);
+              await _syncPendingAttendance(pendingTeachers);
             },
             child: const Text('Save'),
           ),
@@ -712,7 +713,7 @@ class TeacherQrScannerController extends GetxController {
   }
 
   Future<void> _syncPendingAttendance(
-    List<StudentModel> pendingStudents,
+    List<TeacherModel> pendingTeachers,
   ) async {
     isSaving.value = true;
 
@@ -739,21 +740,21 @@ class TeacherQrScannerController extends GetxController {
     int successCount = 0;
     int failedCount = 0;
 
-    for (var student in pendingStudents) {
+    for (var teacher in pendingTeachers) {
       try {
-        final result = await AttendanceService.markAttendance(
+        final result = await TeacherAttendanceService.markAttendance(
           // token: _authToken!,
-          studentId: student.id,
+          teacherId: teacher.id,
           status: 'present',
         );
 
         if (result['success'] == true) {
           successCount++;
 
-          // Update student as synced
-          final index = scannedStudents.indexWhere((s) => s.id == student.id);
+          // Update teacher as synced
+          final index = scannedTeachers.indexWhere((s) => s.id == teacher.id);
           if (index != -1) {
-            scannedStudents[index] = scannedStudents[index].copyWith(
+            scannedTeachers[index] = scannedTeachers[index].copyWith(
               isMarkedOnServer: true,
             );
           }
@@ -762,13 +763,13 @@ class TeacherQrScannerController extends GetxController {
         }
       } catch (e) {
         failedCount++;
-        // debugPrint('Sync error for ${student.id}: $e');
+        // debugPrint('Sync error for ${teacher.id}: $e');
       }
 
       await Future.delayed(const Duration(milliseconds: 100));
     }
 
-    scannedStudents.refresh();
+    scannedTeachers.refresh();
     isSaving.value = false;
 
     // Close loading
@@ -795,113 +796,28 @@ class TeacherQrScannerController extends GetxController {
   }
 
   // ══════════════════════════════════════════════════════════
-  // MANUAL ENTRY
+  // REMOVE teacher
   // ══════════════════════════════════════════════════════════
-  void showManualEntry() {
-    final rollController = TextEditingController();
+  void removeTeacher(String teacherId) {
+    final teacher = scannedTeachers.firstWhereOrNull((s) => s.id == teacherId);
 
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Manual Entry'),
-        content: TextField(
-          controller: rollController,
-          decoration: const InputDecoration(
-            labelText: 'Roll Number',
-            hintText: 'Enter roll number',
-            prefixIcon: Icon(Icons.numbers),
-            border: OutlineInputBorder(),
-          ),
-          keyboardType: TextInputType.text,
-          autofocus: true,
-          onSubmitted: (value) => _processManualEntry(value, rollController),
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () =>
-                _processManualEntry(rollController.text, rollController),
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _processManualEntry(
-    String rollNumber,
-    TextEditingController controller,
-  ) async {
-    final roll = rollNumber.trim();
-    if (roll.isEmpty) return;
-
-    // First try local search
-    StudentModel? student = allStudents.firstWhereOrNull(
-      (s) => s.rollNumber?.toLowerCase() == roll.toLowerCase(),
-    );
-
-    // If not found locally, try API search
-    if (student == null) {
-      try {
-        final result = await StudentService.searchStudents(
-          token: _authToken!,
-          query: roll,
-        );
-
-        if (result['success'] == true && result['data'] != null) {
-          final List<dynamic> students = result['data'];
-          if (students.isNotEmpty) {
-            student = StudentModel.fromJson(students.first);
-            // Add to local list
-            if (!allStudents.any((s) => s.id == student!.id)) {
-              allStudents.add(student);
-            }
-          }
-        }
-      } catch (e) {
-        // debugPrint('Search error: $e');
-      }
-    }
-
-    if (student == null) {
-      Get.back();
-      _showError('Not Found', 'No student with roll: $roll');
-      return;
-    }
-
-    final alreadyScanned = scannedStudents.any((s) => s.id == student!.id);
-    if (alreadyScanned) {
-      Get.back();
-      _showWarning('Already Marked', '${student.name} is already present.');
-      return;
-    }
-
-    Get.back();
-    await markAttendance(student);
-  }
-
-  // ══════════════════════════════════════════════════════════
-  // REMOVE STUDENT
-  // ══════════════════════════════════════════════════════════
-  void removeStudent(String studentId) {
-    final student = scannedStudents.firstWhereOrNull((s) => s.id == studentId);
-
-    if (student != null && student.isMarkedOnServer) {
+    if (teacher != null && teacher.isMarkedOnServer) {
       _showWarning('Cannot Remove', 'Already synced to server.');
       return;
     }
 
-    scannedStudents.removeWhere((s) => s.id == studentId);
-    todayAttendance.removeWhere((a) => a.studentId == studentId);
+    scannedTeachers.removeWhere((s) => s.id == teacherId);
+    todayAttendance.removeWhere((a) => a.teacherId == teacherId);
 
-    final index = allStudents.indexWhere((s) => s.id == studentId);
+    final index = allTeachers.indexWhere((s) => s.id == teacherId);
     if (index != -1) {
-      allStudents[index] = allStudents[index].copyWith(
+      allTeachers[index] = allTeachers[index].copyWith(
         isPresent: false,
         attendanceStatus: 'absent',
       );
     }
 
-    _showInfo('Removed', 'Student removed from list.');
+    _showInfo('Removed', 'Teacher removed from list.');
   }
 
   // ══════════════════════════════════════════════════════════
@@ -970,30 +886,30 @@ class TeacherQrScannerController extends GetxController {
   // ══════════════════════════════════════════════════════════
   Map<String, int> getStats() {
     return {
-      'total': totalStudents,
-      'scanned': scannedStudents.length,
-      'synced': scannedStudents.where((s) => s.isMarkedOnServer).length,
-      'pending': scannedStudents.where((s) => !s.isMarkedOnServer).length,
+      'total': totalTeachers,
+      'scanned': scannedTeachers.length,
+      'synced': scannedTeachers.where((s) => s.isMarkedOnServer).length,
+      'pending': scannedTeachers.where((s) => !s.isMarkedOnServer).length,
     };
   }
 
   int get syncedCount =>
-      scannedStudents.where((s) => s.isMarkedOnServer).length;
+      scannedTeachers.where((s) => s.isMarkedOnServer).length;
   int get pendingCount =>
-      scannedStudents.where((s) => !s.isMarkedOnServer).length;
+      scannedTeachers.where((s) => !s.isMarkedOnServer).length;
 }
 
 class AttendanceStatusExtension {
-  static AttendanceStatus fromString(String status) {
+  static TeacherAttendanceStatus fromString(String status) {
     switch (status.toLowerCase()) {
       case 'present':
-        return AttendanceStatus.present;
+        return TeacherAttendanceStatus.present;
       case 'absent':
-        return AttendanceStatus.absent;
+        return TeacherAttendanceStatus.absent;
       case 'late':
-        return AttendanceStatus.late;
+        return TeacherAttendanceStatus.late;
       default:
-        return AttendanceStatus.absent;
+        return TeacherAttendanceStatus.absent;
     }
   }
 }

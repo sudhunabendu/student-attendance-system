@@ -1,4 +1,4 @@
-enum AttendanceStatus {
+enum TeacherAttendanceStatus {
   present,
   absent,
   late,
@@ -6,42 +6,42 @@ enum AttendanceStatus {
 
   String get displayName {
     switch (this) {
-      case AttendanceStatus.present:
+      case TeacherAttendanceStatus.present:
         return 'Present';
-      case AttendanceStatus.absent:
+      case TeacherAttendanceStatus.absent:
         return 'Absent';
-      case AttendanceStatus.late:
+      case TeacherAttendanceStatus.late:
         return 'Late';
-      case AttendanceStatus.excused:
+      case TeacherAttendanceStatus.excused:
         return 'Excused';
     }
   }
 
   String get apiValue {
     switch (this) {
-      case AttendanceStatus.present:
+      case TeacherAttendanceStatus.present:
         return 'present';
-      case AttendanceStatus.absent:
+      case TeacherAttendanceStatus.absent:
         return 'absent';
-      case AttendanceStatus.late:
+      case TeacherAttendanceStatus.late:
         return 'late';
-      case AttendanceStatus.excused:
+      case TeacherAttendanceStatus.excused:
         return 'excused';
     }
   }
 }
 
-class AttendanceModel {
+class TeacherAttendanceModel {
   final String id;
 
   // References
-  final String studentId;
-  final String? classId;
-  final String? scannedBy;        // teacher/admin id
+  final String teacherId;
+  // final String? classId;
+  final String? scannedBy; // teacher/admin id
 
   // Core fields
   final DateTime date;
-  final AttendanceStatus status;
+  final TeacherAttendanceStatus status;
   final DateTime? checkInTime;
   final DateTime? checkOutTime;
 
@@ -51,37 +51,37 @@ class AttendanceModel {
   final DateTime? updatedAt;
 
   // Optional populated fields (if your API populates them)
-  final String? studentName;
-  final String? studentRollNumber;
-  final String? studentClassName;
-  final String? studentSection;
+  final String? teacherName;
+  // final String? teacherRollNumber;
+  // final String? teacherClassName;
+  // final String? teacherSection;
 
   final String? scannedByName;
 
-  AttendanceModel({
+  TeacherAttendanceModel({
     required this.id,
-    required this.studentId,
+    required this.teacherId,
     required this.date,
     required this.status,
-    this.classId,
+    // this.classId,
     this.scannedBy,
     this.checkInTime,
     this.checkOutTime,
     this.remarks,
     this.createdAt,
     this.updatedAt,
-    this.studentName,
-    this.studentRollNumber,
-    this.studentClassName,
-    this.studentSection,
+    this.teacherName,
+    // this.teacherRollNumber,
+    // this.teacherClassName,
+    // this.teacherSection,
     this.scannedByName,
   });
 
   // Convenience getters
-  bool get isPresent => status == AttendanceStatus.present;
-  bool get isAbsent => status == AttendanceStatus.absent;
-  bool get isLate => status == AttendanceStatus.late;
-  bool get isExcused => status == AttendanceStatus.excused;
+  bool get isPresent => status == TeacherAttendanceStatus.present;
+  bool get isAbsent => status == TeacherAttendanceStatus.absent;
+  bool get isLate => status == TeacherAttendanceStatus.late;
+  bool get isExcused => status == TeacherAttendanceStatus.excused;
 
   String get statusDisplay => status.displayName;
 
@@ -93,26 +93,27 @@ class AttendanceModel {
 
   // ---------- FROM JSON ----------
 
-  factory AttendanceModel.fromJson(Map<String, dynamic> json) {
-    // student can be "id" or populated object
-    String studentId = '';
-    String? studentName;
-    String? studentRoll;
-    String? studentClassName;
-    String? studentSection;
+  factory TeacherAttendanceModel.fromJson(Map<String, dynamic> json) {
+    // teacher can be "id" or populated object
+    String teacherId = '';
+    String? teacherName;
+    // String? teacherRoll;
+    // String? teacherClassName;
+    // String? teacherSection;
 
-    final studentField = json['student'] ?? json['student_id'];
-    if (studentField is String) {
-      studentId = studentField;
-    } else if (studentField is Map<String, dynamic>) {
-      studentId = studentField['_id']?.toString() ?? '';
-      studentName = [
-        studentField['first_name'],
-        studentField['last_name'],
+    final teacherField = json['teacher'] ?? json['teacher_id'];
+    if (teacherField is String) {
+      teacherId = teacherField;
+    } else if (teacherField is Map<String, dynamic>) {
+      teacherId = teacherField['_id']?.toString() ?? '';
+      teacherName = [
+        teacherField['first_name'],
+        teacherField['last_name'],
       ].where((e) => e != null && e.toString().isNotEmpty).join(' ');
-      studentRoll = studentField['role_number']?.toString() ??
-          studentField['roll_number']?.toString();
-      // You can extend this if your populated student has class info
+      // teacherRoll =
+      //     teacherField['role_number']?.toString() ??
+      //     teacherField['roll_number']?.toString();
+      // You can extend this if your populated teacher has class info
     }
 
     // scanned_by can be id or full object
@@ -129,10 +130,10 @@ class AttendanceModel {
       ].where((e) => e != null && e.toString().isNotEmpty).join(' ');
     }
 
-    return AttendanceModel(
+    return TeacherAttendanceModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
-      studentId: studentId,
-      classId: json['class_id']?.toString(),
+      teacherId: teacherId,
+      // classId: json['class_id']?.toString(),
       date: json['date'] != null
           ? DateTime.tryParse(json['date'].toString()) ?? DateTime.now()
           : DateTime.now(),
@@ -149,18 +150,20 @@ class AttendanceModel {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : (json['createdAt'] != null
-              ? DateTime.tryParse(json['createdAt'].toString())
-              : null),
+                ? DateTime.tryParse(json['createdAt'].toString())
+                : null),
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'].toString())
           : (json['updatedAt'] != null
-              ? DateTime.tryParse(json['updatedAt'].toString())
-              : null),
-      studentName:
-          json['student_name']?.toString() ?? json['full_name']?.toString() ?? studentName,
-      studentRollNumber: json['roll_number']?.toString() ?? studentRoll,
-      studentClassName: json['class_name']?.toString(),
-      studentSection: json['section']?.toString(),
+                ? DateTime.tryParse(json['updatedAt'].toString())
+                : null),
+      teacherName:
+          json['teacher_name']?.toString() ??
+          json['full_name']?.toString() ??
+          teacherName,
+      // teacherRollNumber: json['roll_number']?.toString() ?? teacherRoll,
+      // teacherClassName: json['class_name']?.toString(),
+      // teacherSection: json['section']?.toString(),
     );
   }
 
@@ -169,8 +172,8 @@ class AttendanceModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'student': studentId, // or 'student_id' depending on your API
-      'class_id': classId,
+      'teacher': teacherId, // or 'teacher_id' depending on your API
+      // 'class_id': classId,
       'date': date.toIso8601String(),
       'status': status.apiValue,
       'check_in_time': checkInTime?.toIso8601String(),
@@ -180,43 +183,43 @@ class AttendanceModel {
       'scanned_by_name': scannedByName,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
-      'student_name': studentName,
-      'roll_number': studentRollNumber,
-      'class_name': studentClassName,
-      'section': studentSection,
+      'teacher_name': teacherName,
+      // 'roll_number': teacherRollNumber,
+      // 'class_name': teacherClassName,
+      // 'section': teacherSection,
     };
   }
 
   // ---------- LIST HELPERS ----------
 
-  static List<AttendanceModel> fromJsonList(List<dynamic> list) {
+  static List<TeacherAttendanceModel> fromJsonList(List<dynamic> list) {
     return list
-        .map((e) => AttendanceModel.fromJson(e as Map<String, dynamic>))
+        .map((e) => TeacherAttendanceModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  static List<Map<String, dynamic>> toJsonList(List<AttendanceModel> records) {
+  static List<Map<String, dynamic>> toJsonList(List<TeacherAttendanceModel> records) {
     return records.map((r) => r.toJson()).toList();
   }
 
   // ---------- INTERNAL PARSE ----------
 
-  static AttendanceStatus _parseStatus(String raw) {
+  static TeacherAttendanceStatus _parseStatus(String raw) {
     switch (raw.toLowerCase()) {
       case 'present':
-        return AttendanceStatus.present;
+        return TeacherAttendanceStatus.present;
       case 'absent':
-        return AttendanceStatus.absent;
+        return TeacherAttendanceStatus.absent;
       case 'late':
-        return AttendanceStatus.late;
+        return TeacherAttendanceStatus.late;
       case 'excused':
-        return AttendanceStatus.excused;
+        return TeacherAttendanceStatus.excused;
       default:
-        return AttendanceStatus.absent;
+        return TeacherAttendanceStatus.absent;
     }
   }
 
   @override
   String toString() =>
-      'AttendanceModel(id: $id, studentId: $studentId, date: $date, status: ${status.apiValue})';
+      'AttendanceModel(id: $id, teacherId: $teacherId, date: $date, status: ${status.apiValue})';
 }

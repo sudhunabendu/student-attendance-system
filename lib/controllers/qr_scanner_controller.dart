@@ -388,7 +388,7 @@ class QRScannerController extends GetxController {
 
       final bool success = result['success'] == true;
       action = result['action'] ?? 'check_in';
-      debugPrint('result: $result');
+      debugPrint('action: $action');
       if (success) {
         serverSuccess = true;
 

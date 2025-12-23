@@ -40,7 +40,7 @@
 //               children: [
 //                 _buildWelcomeCard(),
 //                 const SizedBox(height: 20),
-                
+
 //                 const Text(
 //                   'Today\'s Overview',
 //                   style: TextStyle(
@@ -51,7 +51,7 @@
 //                 const SizedBox(height: 12),
 //                 _buildStatsGrid(),
 //                 const SizedBox(height: 24),
-                
+
 //                 const Text(
 //                   'Quick Actions',
 //                   style: TextStyle(
@@ -62,7 +62,7 @@
 //                 const SizedBox(height: 12),
 //                 _buildQuickActions(),
 //                 const SizedBox(height: 24),
-                
+
 //                 const Text(
 //                   'Recent Activity',
 //                   style: TextStyle(
@@ -72,7 +72,7 @@
 //                 ),
 //                 const SizedBox(height: 12),
 //                 _buildRecentActivity(),
-                
+
 //                 const SizedBox(height: 20),
 //               ],
 //             ),
@@ -425,8 +425,6 @@
 //   }
 // }
 
-
-
 // lib/screens/dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -440,7 +438,8 @@ import '../app/theme/app_theme.dart';
 class DashboardScreen extends StatelessWidget {
   DashboardScreen({super.key});
 
-  final DashboardController dashboardController = Get.find<DashboardController>();
+  final DashboardController dashboardController =
+      Get.find<DashboardController>();
   final AuthController authController = Get.find<AuthController>();
 
   @override
@@ -448,6 +447,12 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -471,32 +476,26 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 _buildWelcomeCard(),
                 const SizedBox(height: 20),
-                
+
                 // ✅ NEW: Auto-scroll Carousel
                 _buildImageCarousel(),
                 const SizedBox(height: 24),
-                
+
                 const Text(
                   'Quick Actions',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 _buildQuickActions(),
                 const SizedBox(height: 24),
-                
+
                 const Text(
                   'Recent Activity',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 _buildRecentActivity(),
-                
+
                 const SizedBox(height: 20),
               ],
             ),
@@ -587,10 +586,7 @@ class DashboardScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.7),
-                  ],
+                  colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
                 ),
               ),
             ),
@@ -630,65 +626,69 @@ class DashboardScreen extends StatelessWidget {
 
   // ✅ Carousel Dot Indicators
   Widget _buildCarouselIndicators() {
-    return Obx(() => Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: dashboardController.carouselItems.asMap().entries.map((entry) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: dashboardController.currentCarouselIndex.value == entry.key 
-              ? 24 
-              : 8,
-          height: 8,
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
-            color: dashboardController.currentCarouselIndex.value == entry.key
-                ? AppTheme.primaryColor
-                : AppTheme.primaryColor.withOpacity(0.3),
-          ),
-        );
-      }).toList(),
-    ));
+    return Obx(
+      () => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: dashboardController.carouselItems.asMap().entries.map((
+          entry,
+        ) {
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: dashboardController.currentCarouselIndex.value == entry.key
+                ? 24
+                : 8,
+            height: 8,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: dashboardController.currentCarouselIndex.value == entry.key
+                  ? AppTheme.primaryColor
+                  : AppTheme.primaryColor.withOpacity(0.3),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 
   Widget _buildWelcomeCard() {
-    return Obx(() => Card(
-      color: AppTheme.primaryLight,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hello, ${authController.currentUser.value?.name ?? 'Teacher'}!',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+    return Obx(
+      () => Card(
+        color: AppTheme.primaryLight,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hello, ${authController.currentUser.value?.name ?? 'Teacher'}!',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Today is ${_getFormattedDate()}',
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    const SizedBox(height: 4),
+                    Text(
+                      'Today is ${_getFormattedDate()}',
+                      style: const TextStyle(color: Colors.white70),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.white24,
-              child: Icon(Icons.person, color: Colors.white, size: 30),
-            ),
-          ],
+              const CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.white24,
+                child: Icon(Icons.person, color: Colors.white, size: 30),
+              ),
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 
   Widget _buildQuickActions() {
@@ -775,10 +775,8 @@ class DashboardScreen extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: 5,
-        separatorBuilder: (context, index) => Divider(
-          height: 1,
-          color: Colors.grey[200],
-        ),
+        separatorBuilder: (context, index) =>
+            Divider(height: 1, color: Colors.grey[200]),
         itemBuilder: (context, index) {
           final isPresent = index % 2 == 0;
           return ListTile(
@@ -818,15 +816,23 @@ class DashboardScreen extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          Obx(() => UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: AppTheme.primaryColor),
-            currentAccountPicture: const CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person, color: AppTheme.primaryColor, size: 40),
+          Obx(
+            () => UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(color: AppTheme.primaryColor),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(
+                  Icons.person,
+                  color: AppTheme.primaryColor,
+                  size: 40,
+                ),
+              ),
+              accountName: Text(
+                authController.currentUser.value?.name ?? 'Teacher',
+              ),
+              accountEmail: Text(authController.currentUser.value?.email ?? ''),
             ),
-            accountName: Text(authController.currentUser.value?.name ?? 'Teacher'),
-            accountEmail: Text(authController.currentUser.value?.email ?? ''),
-          )),
+          ),
           _buildDrawerItem(Icons.dashboard, 'Dashboard', () => Get.back()),
           _buildDrawerItem(Icons.people, 'Students', () {
             Get.back();
@@ -860,33 +866,44 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildDrawerItem(IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      onTap: onTap,
-    );
+    return ListTile(leading: Icon(icon), title: Text(title), onTap: onTap);
   }
 
   Widget _buildBottomNav() {
-    return Obx(() => BottomNavigationBar(
-      currentIndex: dashboardController.selectedIndex.value,
-      onTap: dashboardController.changeTab,
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: AppTheme.primaryColor,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Students'),
-        BottomNavigationBarItem(icon: Icon(Icons.how_to_reg), label: 'Attendance'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
-    ));
+    return Obx(
+      () => BottomNavigationBar(
+        currentIndex: dashboardController.selectedIndex.value,
+        onTap: dashboardController.changeTab,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: AppTheme.primaryColor,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Students'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.how_to_reg),
+            label: 'Attendance',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
+    );
   }
 
   String _getFormattedDate() {
     final now = DateTime.now();
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${now.day} ${months[now.month - 1]}, ${now.year}';
   }

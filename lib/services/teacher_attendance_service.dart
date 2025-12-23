@@ -3,90 +3,92 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../app/utils/constants.dart';
-import '../models/attendance_model.dart';
-import '../models/attendance_response_model.dart';
-import '../models/student_model.dart';
+import '../models/teacher_attendance_model.dart';
+import '../models/teacher_attendance_response_model.dart';
+import '../models/teacher_model.dart';
 
-class AttendanceService {
+class TeacherAttendanceService {
   // ══════════════════════════════════════════════════════════
-  // MARK ATTENDANCE (Single Student) - FIXED
+  // MARK ATTENDANCE (Single Teacher) - FIXED
   // ══════════════════════════════════════════════════════════
   static Future<Map<String, dynamic>> markAttendance({
     // required String token,
-    required String studentId,
+    required String teacherId,
     String status = 'present',
   }) async {
     try {
       final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.markAttendance);
-      // print("Mark Attendance URL: $url");
-      final body = <String, dynamic>{"student_id": studentId};
-      // ✅ Debug: Print request details
-      // debugPrint("📤 Mark Attendance URL: $url");
-      // debugPrint("📤 Mark Attendance Body: ${jsonEncode(body)}");
+
+      final body = <String, dynamic>{"teacher_id": teacherId};
+
       final response = await http.post(
         url,
         headers: {
-          'Content-Type': 'application/json', // ✅ THIS WAS MISSING!
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: jsonEncode(body),
       );
 
-      final data = jsonDecode(response.body);
-      // debugPrint("📥 Mark Attendance Response: $data");
+      final Map<String, dynamic> data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // ✅ Parse using AttendanceResponseModel
-        final attendanceResponse = AttendanceResponseModel.fromApiResponse(
-          data,
-        );
+        // ✅ Parse model (includes action)
+        final TeacherAttendanceResponseModel? attendance =
+            TeacherAttendanceResponseModel.fromApiResponse(data);
 
-        // Check if already marked
         final bool alreadyMarked =
             data["message"]?.toString().toLowerCase().contains('already') ??
             false;
 
         return {
           "success": data["success"] ?? true,
-          "message": data["message"] ?? "Attendance marked",
+          "message": data["message"] ?? "Attendance updated",
           "alreadyMarked": alreadyMarked,
-          // ✅ Use parsed model data
-          "attendanceId": attendanceResponse?.attendanceId,
-          "studentId": attendanceResponse?.studentId,
-          "studentName": attendanceResponse?.fullName,
-          "firstName": attendanceResponse?.firstName,
-          "lastName": attendanceResponse?.lastName,
-          "rollNumber": attendanceResponse?.rollNumber,
-          "email": attendanceResponse?.email,
-          "classId": attendanceResponse?.classId,
-          "className": attendanceResponse?.className,
-          "status": attendanceResponse?.status ?? status,
-          "checkInTime": attendanceResponse?.checkInTime,
-          "formattedCheckInTime": attendanceResponse?.formattedCheckInTime,
-          "date": attendanceResponse?.date,
-          "formattedDate": attendanceResponse?.formattedDate,
-          // ✅ Include the parsed model
-          "attendanceRecord": attendanceResponse,
-          // Raw data for reference
+
+          // ---- ACTION ----
+          "action": attendance?.action, // check_in / check_out
+          // ---- teacher ----
+          "attendanceId": attendance?.attendanceId,
+          "teacherId": attendance?.teacherId,
+          "teacherName": attendance?.fullName,
+          "firstName": attendance?.firstName,
+          "lastName": attendance?.lastName,
+          // "rollNumber": attendance?.rollNumber,
+          "email": attendance?.email,
+
+          // ---- CLASS ----
+          "classId": attendance?.classId,
+          "className": attendance?.className,
+
+          // ---- ATTENDANCE ----
+          "status": attendance?.status ?? status,
+          "checkInTime": attendance?.checkInTime,
+          "checkOutTime": attendance?.checkOutTime,
+          "formattedCheckInTime": attendance?.formattedCheckInTime,
+          "formattedDate": attendance?.formattedDate,
+
+          // ---- FULL OBJECT ----
+          "attendanceRecord": attendance,
+
+          // ---- RAW ----
           "data": data['data'],
         };
       } else {
         return {
           "success": false,
-          "message": data["message"] ?? "Something went wrong",
+          "message": data["message"] ?? "Failed to mark attendance",
           "error": data["error"],
-          "data": null,
           "attendanceRecord": null,
+          "data": null,
         };
       }
     } catch (e, stackTrace) {
-      // debugPrint("❌ Mark Attendance Error: $e");
-      // debugPrint("   Stack: $stackTrace");
       return {
         "success": false,
         "message": "Network error: ${e.toString()}",
-        "data": null,
         "attendanceRecord": null,
+        "data": null,
       };
     }
   }
@@ -96,14 +98,14 @@ class AttendanceService {
   // ══════════════════════════════════════════════════════════
   static Future<AttendanceResult> markAttendanceWithModel({
     required String token,
-    required String studentId,
+    required String teacherId,
     String status = 'present',
     String? classId,
   }) async {
     try {
       final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.markAttendance);
 
-      final body = <String, dynamic>{"student_id": studentId};
+      final body = <String, dynamic>{"teacher_id": teacherId};
 
       if (classId != null && classId.isNotEmpty) {
         body["class_id"] = classId;
@@ -121,7 +123,7 @@ class AttendanceService {
       // debugPrint("📥 Mark Attendance Response: ${response.statusCode}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final attendanceResponse = AttendanceResponseModel.fromApiResponse(
+        final attendanceResponse = TeacherAttendanceResponseModel.fromApiResponse(
           data,
         );
         final bool alreadyMarked =
@@ -167,7 +169,7 @@ class AttendanceService {
       final body = {"class_id": classId, "attendance": attendanceList};
 
       debugPrint(
-        "📤 Bulk Attendance Request: ${attendanceList.length} students",
+        "📤 Bulk Attendance Request: ${attendanceList.length} teachers",
       );
 
       final response = await http.post(
@@ -189,7 +191,7 @@ class AttendanceService {
           successCount: successList.length,
           failedCount: failedList.length,
           successRecords: successList
-              .map((json) => AttendanceResponseModel.fromJson(json))
+              .map((json) => TeacherAttendanceResponseModel.fromJson(json))
               .toList(),
           failedRecords: failedList,
         );
@@ -250,13 +252,13 @@ class AttendanceService {
 
         // Parse attendance records
         final records = attendanceList
-            .map((json) => AttendanceResponseModel.fromJson(json))
+            .map((json) => TeacherAttendanceResponseModel.fromJson(json))
             .toList();
 
         return {
           "success": true,
           "message": data["message"] ?? "Attendance fetched",
-          "attendance": AttendanceModel.fromJsonList(attendanceList),
+          "attendance": TeacherAttendanceModel.fromJsonList(attendanceList),
           "attendanceRecords": records,
           "stats": _parseStats(data["stats"]),
           "count": records.length,
@@ -265,8 +267,8 @@ class AttendanceService {
         return {
           "success": false,
           "message": data["message"] ?? "Failed to fetch attendance",
-          "attendance": <AttendanceModel>[],
-          "attendanceRecords": <AttendanceResponseModel>[],
+          "attendance": <TeacherAttendanceModel>[],
+          "attendanceRecords": <TeacherAttendanceResponseModel>[],
         };
       }
     } catch (e) {
@@ -274,8 +276,8 @@ class AttendanceService {
       return {
         "success": false,
         "message": "Network error: $e",
-        "attendance": <AttendanceModel>[],
-        "attendanceRecords": <AttendanceResponseModel>[],
+        "attendance": <TeacherAttendanceModel>[],
+        "attendanceRecords": <TeacherAttendanceResponseModel>[],
       };
     }
   }
@@ -320,7 +322,7 @@ class AttendanceService {
           success: true,
           message: data["message"] ?? "Attendance fetched",
           records: attendanceList
-              .map((json) => AttendanceResponseModel.fromJson(json))
+              .map((json) => TeacherAttendanceResponseModel.fromJson(json))
               .toList(),
           stats: AttendanceStats.fromJson(data["stats"] ?? {}),
         );
@@ -339,173 +341,100 @@ class AttendanceService {
   // ══════════════════════════════════════════════════════════
   // GET ATTENDANCE HISTORY - FIXED
   // ══════════════════════════════════════════════════════════
-// static Future<AttendanceHistoryResult> getAttendanceHistory({
-//   String? startDate,
-//   String? endDate,
-//   String? classId,
-//   String? section,
-//   String? studentId,
-//   int page = 1,
-//   int limit = 50,
-// }) async {
-//   try {
-//     final queryParams = <String, String>{
-//       'page': page.toString(),
-//       'limit': limit.toString(),
-//     };
-//     if (startDate != null) queryParams['start_date'] = startDate;
-//     if (endDate != null) queryParams['end_date'] = endDate;
-//     if (classId != null && classId.isNotEmpty) {
-//       queryParams['class_id'] = classId;
-//     }
-//     if (section != null && section.isNotEmpty && section != 'All') {
-//       queryParams['section'] = section;
-//     }
-//     if (studentId != null && studentId.isNotEmpty) {
-//       queryParams['student_id'] = studentId;
-//     }
 
-//     final uri = Uri.parse(
-//       ApiConstants.baseUrl + ApiConstants.getTodayAttendance,
-//     ).replace(queryParameters: queryParams);
-
-//     // debugPrint("📤 Get Attendance History: $uri");
-
-//     final response = await http.get(
-//       uri,
-//       headers: {
-//         'Content-Type': 'application/json',
-//         'Accept': 'application/json',
-//       },
-//     );
-
-//     final data = jsonDecode(response.body);
-//     // debugPrint("📥 Attendance History Response: $data");
-
-//     // API success is by res_code, not HTTP status/message keys
-//     final int resCode = data['res_code'] ?? response.statusCode;
-
-//     if (resCode == 200) {
-//       final List<dynamic> attendanceList = data['data'] ?? [];
-
-//       return AttendanceHistoryResult(
-//         success: true,
-//         message: data['response'] ?? 'History fetched',
-//         records: attendanceList
-//             .map<AttendanceResponseModel>(
-//               (json) => AttendanceResponseModel.fromJson(json),
-//             )
-//             .toList(),
-        
-//       );
-//     } else {
-//       return AttendanceHistoryResult(
-//         success: false,
-//         message: data['response'] ?? 'Failed to fetch history',
-//       );
-//     }
-//   } catch (e) {
-//     // debugPrint("❌ Get Attendance History Error: $e");
-//     return AttendanceHistoryResult(
-//       success: false,
-//       message: "Network error: $e",
-//     );
-//   }
-// }
-
-static Future<AttendanceHistoryResult> getAttendanceHistory({
-  String? startDate,
-  String? endDate,
-  String? classId,
-  String? section,
-  String? studentId,
-  int page = 1,
-  int limit = 50,
-}) async {
-  try {
-    final queryParams = <String, String>{
-      'page': page.toString(),
-      'limit': limit.toString(),
-    };
-    if (startDate != null) queryParams['start_date'] = startDate;
-    if (endDate != null) queryParams['end_date'] = endDate;
-    if (classId != null && classId.isNotEmpty) {
-      queryParams['class_id'] = classId;
-    }
-    if (section != null && section.isNotEmpty && section != 'All') {
-      queryParams['section'] = section;
-    }
-    if (studentId != null && studentId.isNotEmpty) {
-      queryParams['student_id'] = studentId;
-    }
-
-    final uri = Uri.parse(
-      ApiConstants.baseUrl + ApiConstants.getTodayAttendance,
-    ).replace(queryParameters: queryParams);
-
-    debugPrint("📤 Get Attendance History: $uri");
-
-    final response = await http.get(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    );
-
-    // ✅ Safe JSON decode
-    Map<String, dynamic> data;
+  static Future<AttendanceHistoryResult> getAttendanceHistory({
+    String? startDate,
+    String? endDate,
+    String? classId,
+    String? section,
+    String? teacherId,
+    int page = 1,
+    int limit = 50,
+  }) async {
     try {
-      data = jsonDecode(response.body);
-    } catch (e) {
-      return AttendanceHistoryResult(
-        success: false,
-        message: "Invalid JSON response",
-      );
-    }
-    
-    debugPrint("📥 Attendance History Response: $data");
-
-    final int resCode = data['res_code'] ?? response.statusCode;
-
-    if (resCode == 200) {
-      final List<dynamic> attendanceList = data['data'] ?? [];
-      
-      // ✅ Parse each record with error handling
-      final records = <AttendanceResponseModel>[];
-      for (var json in attendanceList) {
-        try {
-          records.add(AttendanceResponseModel.fromJson(json));
-        } catch (e) {
-          debugPrint("⚠️ Failed to parse record: $e");
-          // Continue parsing other records
-        }
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (startDate != null) queryParams['start_date'] = startDate;
+      if (endDate != null) queryParams['end_date'] = endDate;
+      if (classId != null && classId.isNotEmpty) {
+        queryParams['class_id'] = classId;
+      }
+      if (section != null && section.isNotEmpty && section != 'All') {
+        queryParams['section'] = section;
+      }
+      if (teacherId != null && teacherId.isNotEmpty) {
+        queryParams['teacher_id'] = teacherId;
       }
 
-      return AttendanceHistoryResult(
-        success: true,
-        message: data['response'] ?? 'History fetched',
-        records: records,
+      final uri = Uri.parse(
+        ApiConstants.baseUrl + ApiConstants.getTodayAttendance,
+      ).replace(queryParameters: queryParams);
+
+      debugPrint("📤 Get Attendance History: $uri");
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       );
-    } else {
+
+      // ✅ Safe JSON decode
+      Map<String, dynamic> data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (e) {
+        return AttendanceHistoryResult(
+          success: false,
+          message: "Invalid JSON response",
+        );
+      }
+
+      debugPrint("📥 Attendance History Response: $data");
+
+      final int resCode = data['res_code'] ?? response.statusCode;
+
+      if (resCode == 200) {
+        final List<dynamic> attendanceList = data['data'] ?? [];
+
+        // ✅ Parse each record with error handling
+        final records = <TeacherAttendanceResponseModel>[];
+        for (var json in attendanceList) {
+          try {
+            records.add(TeacherAttendanceResponseModel.fromJson(json));
+          } catch (e) {
+            debugPrint("⚠️ Failed to parse record: $e");
+            // Continue parsing other records
+          }
+        }
+
+        return AttendanceHistoryResult(
+          success: true,
+          message: data['response'] ?? 'History fetched',
+          records: records,
+        );
+      } else {
+        return AttendanceHistoryResult(
+          success: false,
+          message: data['response'] ?? 'Failed to fetch history',
+        );
+      }
+    } catch (e) {
+      debugPrint("❌ Get Attendance History Error: $e");
       return AttendanceHistoryResult(
         success: false,
-        message: data['response'] ?? 'Failed to fetch history',
+        message: "Network error: $e",
       );
     }
-  } catch (e) {
-    debugPrint("❌ Get Attendance History Error: $e");
-    return AttendanceHistoryResult(
-      success: false,
-      message: "Network error: $e",
-    );
   }
-}
 
   // ══════════════════════════════════════════════════════════
   // GET STUDENTS FOR ATTENDANCE
   // ══════════════════════════════════════════════════════════
-  static Future<StudentsForAttendanceResult> getStudentsForAttendance({
+  static Future<TeachersForAttendanceResult> getTeachersForAttendance({
     required String token,
     required String classId,
     String? section,
@@ -519,10 +448,10 @@ static Future<AttendanceHistoryResult> getAttendanceHistory({
       if (date != null) queryParams['date'] = date;
 
       final uri = Uri.parse(
-        ApiConstants.baseUrl + ApiConstants.getStudentsForAttendance,
+        ApiConstants.baseUrl + ApiConstants.getTeachersForAttendance,
       ).replace(queryParameters: queryParams);
 
-      debugPrint("📤 Get Students For Attendance: $uri");
+      debugPrint("📤 Get Teachers For Attendance: $uri");
 
       final response = await http.get(
         uri,
@@ -530,11 +459,11 @@ static Future<AttendanceHistoryResult> getAttendanceHistory({
       );
 
       final data = jsonDecode(response.body);
-      debugPrint("📥 Students For Attendance Response: ${response.statusCode}");
+      debugPrint("📥 Teachers For Attendance Response: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        final List<dynamic> studentsList =
-            data['data'] ?? data['students'] ?? [];
+        final List<dynamic> teachersList =
+            data['data'] ?? data['teachers'] ?? [];
         final List<dynamic> alreadyMarkedList = data['alreadyMarked'] ?? [];
 
         // Parse already marked student IDs
@@ -549,32 +478,32 @@ static Future<AttendanceHistoryResult> getAttendanceHistory({
             .toSet();
 
         // Parse students and mark those already marked
-        final students = studentsList.map((json) {
-          final student = StudentModel.fromJson(json);
-          final isMarked = markedStudentIds.contains(student.id);
-          return student.copyWith(
+        final teachers = teachersList.map((json) {
+          final teacher = TeacherModel.fromJson(json);
+          final isMarked = markedStudentIds.contains(teacher.id);
+          return teacher.copyWith(
             isMarkedOnServer: isMarked,
             isPresent: isMarked,
           );
         }).toList();
 
-        return StudentsForAttendanceResult(
+        return TeachersForAttendanceResult(
           success: true,
-          message: data["message"] ?? "Students fetched",
-          students: students,
+          message: data["message"] ?? "teachers fetched",
+          teachers: teachers,
           alreadyMarkedIds: markedStudentIds.toList(),
-          totalCount: students.length,
+          totalCount: teachers.length,
           markedCount: markedStudentIds.length,
         );
       } else {
-        return StudentsForAttendanceResult(
+        return TeachersForAttendanceResult(
           success: false,
           message: data["message"] ?? "Failed to fetch students",
         );
       }
     } catch (e) {
       debugPrint("❌ Get Students For Attendance Error: $e");
-      return StudentsForAttendanceResult(
+      return TeachersForAttendanceResult(
         success: false,
         message: "Network error: $e",
       );
@@ -656,7 +585,7 @@ class AttendanceResult {
   final bool success;
   final String message;
   final bool alreadyMarked;
-  final AttendanceResponseModel? attendance;
+  final TeacherAttendanceResponseModel? attendance;
   final String? error;
 
   AttendanceResult({
@@ -679,7 +608,7 @@ class BulkAttendanceResult {
   final String message;
   final int successCount;
   final int failedCount;
-  final List<AttendanceResponseModel> successRecords;
+  final List<TeacherAttendanceResponseModel> successRecords;
   final List<dynamic> failedRecords;
   final String? error;
 
@@ -701,7 +630,7 @@ class BulkAttendanceResult {
 class AttendanceListResult {
   final bool success;
   final String message;
-  final List<AttendanceResponseModel> records;
+  final List<TeacherAttendanceResponseModel> records;
   final AttendanceStats? stats;
   final String? error;
 
@@ -722,7 +651,7 @@ class AttendanceListResult {
 class AttendanceHistoryResult {
   final bool success;
   final String message;
-  final List<AttendanceResponseModel> records;
+  final List<TeacherAttendanceResponseModel> records;
   final PaginationInfo? pagination;
   final AttendanceStats? stats;
   final String? error;
@@ -740,19 +669,19 @@ class AttendanceHistoryResult {
 }
 
 /// Result for students for attendance
-class StudentsForAttendanceResult {
+class TeachersForAttendanceResult {
   final bool success;
   final String message;
-  final List<StudentModel> students;
+  final List<TeacherModel> teachers;
   final List<String> alreadyMarkedIds;
   final int totalCount;
   final int markedCount;
   final String? error;
 
-  StudentsForAttendanceResult({
+  TeachersForAttendanceResult({
     required this.success,
     required this.message,
-    this.students = const [],
+    this.teachers = const [],
     this.alreadyMarkedIds = const [],
     this.totalCount = 0,
     this.markedCount = 0,
@@ -760,8 +689,8 @@ class StudentsForAttendanceResult {
   });
 
   int get unmarkedCount => totalCount - markedCount;
-  List<StudentModel> get unmarkedStudents =>
-      students.where((s) => !s.isMarkedOnServer).toList();
+  List<TeacherModel> get unmarkedTeachers =>
+      teachers.where((s) => !s.isMarkedOnServer).toList();
 }
 
 /// Result for attendance stats

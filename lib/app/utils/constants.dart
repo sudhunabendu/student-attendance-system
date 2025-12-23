@@ -18,14 +18,18 @@ class ApiConstants {
   static const String getAttendanceStats = '/attendance/stats';
   static const String getStudentsByClass = '/attendance/students';
   static const String searchStudents = '/attendance/students';
+  static const String searchTeachers = '/auth/teachers';
   static const String getClasses = '/auth/students';
   static const String getSections = '/attendance/students';
   static const String getStudentAttendance = '/attendance/students';
+  static const String getTeacherAttendance = '/auth/attendance';
   static const String markBulkAttendance = '/auth/mark-bulk-attendance';
 
-    // Student Endpoints
+  // Student Endpoints
   static const String getStudents = '/auth/students';
+  static const String getTeachers = '/auth/teachers';
   static const String getStudentsForAttendance = '/students/for-attendance';
+  static const String getTeachersForAttendance = '/teachers/for-attendance';
   // Headers
   static Map<String, String> headers = {
     'Content-Type': 'application/json',

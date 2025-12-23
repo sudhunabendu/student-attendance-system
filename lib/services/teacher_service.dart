@@ -1,124 +1,125 @@
-// lib/services/student_service.dart
+// lib/services/teacher_service.dart
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/student_model.dart';
+import '../models/teacher_model.dart';
 import '../app/utils/constants.dart';
 
-class StudentService {
+class TeacherService {
   // ══════════════════════════════════════════════════════════
-  // GET ALL STUDENTS (No Auth Required)
+  // GET ALL TEACHER (No Auth Required)
   // ══════════════════════════════════════════════════════════
- static Future<Map<String, dynamic>> getAllStudents({
-  int page = 1,
-  int limit = 20,
-  String? classId,
-  String? section,
-  String? search,
-  String? status,
-}) async {
-  try {
-    final queryParams = <String, String>{
-      'page': page.toString(),
-      'limit': limit.toString(),
-    };
-
-    if (classId != null && classId.isNotEmpty && classId != 'All') {
-      queryParams['class_id'] = classId;
-    }
-    if (section != null && section.isNotEmpty && section != 'All') {
-      queryParams['section'] = section;
-    }
-    if (search != null && search.isNotEmpty) {
-      queryParams['search'] = search;
-    }
-    if (status != null && status.isNotEmpty && status != 'All') {
-      queryParams['status'] = status;
-    }
-
-    final uri = Uri.parse(
-      ApiConstants.baseUrl + ApiConstants.getStudents,
-    ).replace(queryParameters: queryParams);
-
-    // print("📡 Calling API: $uri");
-
-    final response = await http.get(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    );
-
-    // print("📥 Response Status: ${response.statusCode}");
-
-    // ✅ Check for HTML response
-    if (response.body.trim().startsWith('<!DOCTYPE') || 
-        response.body.trim().startsWith('<html')) {
-      // print("❌ Received HTML instead of JSON!");
-      return {
-        "success": false,
-        "message": "Server returned HTML. Check API URL.",
-        "students": <StudentModel>[],
+  static Future<Map<String, dynamic>> getAllteachers({
+    int page = 1,
+    int limit = 20,
+    String? classId,
+    String? section,
+    String? search,
+    String? status,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
       };
-    }
 
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200 && data['res_code'] == 200) {
-      final List<dynamic> studentsList = data['data'] ?? [];
-
-      // print("✅ Fetched ${studentsList.length} students from API");
-
-      // ✅ Parse students with error handling
-      List<StudentModel> students = [];
-      for (var i = 0; i < studentsList.length; i++) {
-        try {
-          students.add(StudentModel.fromJson(studentsList[i]));
-        } catch (e) {
-          // print("❌ Error parsing student $i: $e");
-        }
+      if (classId != null && classId.isNotEmpty && classId != 'All') {
+        queryParams['class_id'] = classId;
+      }
+      if (section != null && section.isNotEmpty && section != 'All') {
+        queryParams['section'] = section;
+      }
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+      if (status != null && status.isNotEmpty && status != 'All') {
+        queryParams['status'] = status;
       }
 
-      return {
-        "success": true,
-        "message": data["response"] ?? "Students fetched successfully",
-        "students": students,
-        "pagination": data['pagination'] ?? {
-          'page': page,
-          'limit': limit,
-          'total': studentsList.length,
-          'totalPages': 1,
+      final uri = Uri.parse(
+        ApiConstants.baseUrl + ApiConstants.getTeachers,
+      ).replace(queryParameters: queryParams);
+
+      // print("📡 Calling API: $uri");
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-      };
-    } else {
+      );
+
+      // print("📥 Response Status: ${response.statusCode}");
+
+      // ✅ Check for HTML response
+      if (response.body.trim().startsWith('<!DOCTYPE') ||
+          response.body.trim().startsWith('<html')) {
+        // print("❌ Received HTML instead of JSON!");
+        return {
+          "success": false,
+          "message": "Server returned HTML. Check API URL.",
+          "teachers": <TeacherModel>[],
+        };
+      }
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['res_code'] == 200) {
+        final List<dynamic> teacherList = data['data'] ?? [];
+
+        // print("✅ Fetched ${teacherList.length} teachers from API");
+
+        // ✅ Parse teachers with error handling
+        List<TeacherModel> teachers = [];
+        for (var i = 0; i < teacherList.length; i++) {
+          try {
+            teachers.add(TeacherModel.fromJson(teacherList[i]));
+          } catch (e) {
+            // print("❌ Error parsing teacher $i: $e");
+          }
+        }
+
+        return {
+          "success": true,
+          "message": data["response"] ?? "Teacher fetched successfully",
+          "teachers": teachers,
+          "pagination":
+              data['pagination'] ??
+              {
+                'page': page,
+                'limit': limit,
+                'total': teacherList.length,
+                'totalPages': 1,
+              },
+        };
+      } else {
+        return {
+          "success": false,
+          "message": data["response"] ?? "Failed to fetch teachers",
+          "teachers": <TeacherModel>[],
+        };
+      }
+    } catch (e) {
+      print("❌ Get Teacher Error: $e");
       return {
         "success": false,
-        "message": data["response"] ?? "Failed to fetch students",
-        "students": <StudentModel>[],
+        "message": "Network error: $e",
+        "teachers": <TeacherModel>[],
       };
     }
-  } catch (e) {
-    // print("❌ Get Students Error: $e");
-    return {
-      "success": false,
-      "message": "Network error: $e",
-      "students": <StudentModel>[],
-    };
   }
-} 
 
-
-// serach students  // ══════════════════════════════════════════════════════════
-  // SEARCH STUDENTS (No Auth Required)
+  // serach teacher  // ══════════════════════════════════════════════════════════
+  // SEARCH teacher (No Auth Required)
   // ══════════════════════════════════════════════════════════
-  static Future<Map<String, dynamic>> searchStudents({
+  static Future<Map<String, dynamic>> searchTeachers({
     required String token,
     required String query,
   }) async {
     try {
       final uri = Uri.parse(
-        '${ApiConstants.baseUrl}${ApiConstants.searchStudents}',
+        '${ApiConstants.baseUrl}${ApiConstants.searchTeachers}',
       ).replace(queryParameters: {'q': query});
 
       final response = await http.get(
@@ -128,44 +129,45 @@ class StudentService {
 
       final data = jsonDecode(response.body);
 
-      // print("Search Students Response: $data");
+      // print("Search teachers Response: $data");
 
       if (response.statusCode == 200) {
-        final List<dynamic> studentsList = data['data'] ?? data['students'] ?? [];
+        final List<dynamic> teachersList =
+            data['data'] ?? data['teachers'] ?? [];
         return {
           "success": true,
           "message": data["message"] ?? "Search completed",
-          "students": StudentModel.fromJsonList(studentsList),
+          "teachers": TeacherModel.fromJsonList(teachersList),
         };
       } else {
         return {
           "success": false,
           "message": data["message"] ?? "Search failed",
-          "students": <StudentModel>[],
+          "teachers": <TeacherModel>[],
         };
       }
     } catch (e) {
-      // print("Search Students Error: $e");
+      // print("Search teachers Error: $e");
       return {
         "success": false,
         "message": "Network error: $e",
-        "students": <StudentModel>[],
+        "teachers": <TeacherModel>[],
       };
     }
   }
 
   // ══════════════════════════════════════════════════════════
-  // GET STUDENT BY ID (No Auth Required)
+  // GET TEACHER BY ID (No Auth Required)
   // ══════════════════════════════════════════════════════════
- static Future<Map<String, dynamic>> getStudentById({
-    required String studentId,
+  static Future<Map<String, dynamic>> getTeacherById({
+    required String teacherId,
   }) async {
     try {
       final url = Uri.parse(
-        '${ApiConstants.baseUrl}${ApiConstants.getStudents}/$studentId',
+        '${ApiConstants.baseUrl}${ApiConstants.getTeachers}/$teacherId',
       );
 
-      // print("📤 Fetching student: $url");
+      // print("📤 Fetching teacher: $url");
 
       final response = await http.get(
         url,
@@ -177,31 +179,30 @@ class StudentService {
 
       final data = jsonDecode(response.body);
 
-      // print("📥 Get Student By ID Response: $data");
+      // print("📥 Get teacher By ID Response: $data");
 
       if (response.statusCode == 200 && data['res_code'] == 200) {
         return {
           "success": true,
-          "message": data["response"] ?? "Student fetched successfully",
-          "student": StudentModel.fromJson(data['data'] ?? {}),
+          "message": data["response"] ?? "teacher fetched successfully",
+          "teacher": TeacherModel.fromJson(data['data'] ?? {}),
         };
       } else {
         return {
           "success": false,
-          "message": data["response"] ?? "Failed to fetch student",
-          "student": null,
+          "message": data["response"] ?? "Failed to fetch teacher",
+          "teacher": null,
         };
       }
     } catch (e) {
-      // print("❌ Get Student By ID Error: $e");
+      // print("❌ Get teacher By ID Error: $e");
       return {
         "success": false,
         "message": "Network error: $e",
-        "student": null,
+        "teacher": null,
       };
     }
   }
-
 
   // ══════════════════════════════════════════════════════════
   // GET CLASSES (No Auth Required)
@@ -262,11 +263,11 @@ class StudentService {
   }
 
   // ══════════════════════════════════════════════════════════
-  // GET STUDENT ATTENDANCE (May require auth - keep token optional)
+  // GET TEACHER ATTENDANCE (May require auth - keep token optional)
   // ══════════════════════════════════════════════════════════
-  static Future<Map<String, dynamic>> getStudentAttendance({
+  static Future<Map<String, dynamic>> getTeacherAttendance({
     String? token,
-    required String studentId,
+    required String teacherId,
     String? startDate,
     String? endDate,
   }) async {
@@ -277,7 +278,7 @@ class StudentService {
       if (endDate != null) queryParams['end_date'] = endDate;
 
       final uri = Uri.parse(
-        '${ApiConstants.baseUrl}${ApiConstants.getStudentAttendance}/$studentId',
+        '${ApiConstants.baseUrl}${ApiConstants.getTeacherAttendance}/$teacherId',
       ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
       final headers = <String, String>{
@@ -294,7 +295,7 @@ class StudentService {
 
       final data = jsonDecode(response.body);
 
-      // print("📥 Get Student Attendance Response: $data");
+      // print("📥 Get teacher Attendance Response: $data");
 
       if (response.statusCode == 200 && data['res_code'] == 200) {
         return {
@@ -311,7 +312,7 @@ class StudentService {
         };
       }
     } catch (e) {
-      // print("❌ Get Student Attendance Error: $e");
+      // print("❌ Get teacher Attendance Error: $e");
       return {
         "success": false,
         "message": "Network error: $e",
