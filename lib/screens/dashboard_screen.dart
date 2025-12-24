@@ -717,7 +717,7 @@ class DashboardScreen extends StatelessWidget {
             'Teacher QR Scanner',
             Icons.qr_code_scanner,
             AppTheme.secondaryColor,
-            () => Get.toNamed(AppRoutes.students),
+            () => Get.toNamed(AppRoutes.teacherQrScanner),
           ),
         ),
       ],

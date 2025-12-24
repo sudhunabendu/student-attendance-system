@@ -104,7 +104,7 @@ class TeacherService {
       print("❌ Get Teacher Error: $e");
       return {
         "success": false,
-        "message": "Network error: $e",
+        "message": "8 Network error: $e",
         "teachers": <TeacherModel>[],
       };
     }
@@ -150,7 +150,7 @@ class TeacherService {
       // print("Search teachers Error: $e");
       return {
         "success": false,
-        "message": "Network error: $e",
+        "message": "9 Network error: $e",
         "teachers": <TeacherModel>[],
       };
     }
@@ -198,7 +198,7 @@ class TeacherService {
       // print("❌ Get teacher By ID Error: $e");
       return {
         "success": false,
-        "message": "Network error: $e",
+        "message": "10 Network error: $e",
         "teacher": null,
       };
     }
@@ -315,7 +315,7 @@ class TeacherService {
       // print("❌ Get teacher Attendance Error: $e");
       return {
         "success": false,
-        "message": "Network error: $e",
+        "message": "11 Network error: $e",
         "attendance": [],
       };
     }

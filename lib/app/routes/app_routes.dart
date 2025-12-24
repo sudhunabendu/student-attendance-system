@@ -10,6 +10,7 @@ import '../../screens/reports_screen.dart';
 import '../../screens/profile_screen.dart';
 import '../../screens/settings_screen.dart';
 import '../../screens/qr_scanner_screen.dart';  // ✅ Add this
+import '../../screens/teacher_qr_scanner_screen.dart';
 
 class AppRoutes {
   static const splash = '/splash';
@@ -22,6 +23,7 @@ class AppRoutes {
   static const profile = '/profile';
   static const settings = '/settings';
   static const qrScanner = '/qr-scanner';  // ✅ Add this
+  static const teacherQrScanner = '/teacher-qr-scanner';
 
   static final routes = [
     GetPage(name: splash, page: () => const SplashScreen()),
@@ -34,6 +36,7 @@ class AppRoutes {
     GetPage(name: profile, page: () => ProfileScreen()),
     GetPage(name: settings, page: () => SettingsScreen()),
     GetPage(name: qrScanner, page: () => QRScannerScreen()),  // ✅ Add this
+    GetPage(name: teacherQrScanner, page: () => TeacherQRScannerScreen()),
 
   ];
 }

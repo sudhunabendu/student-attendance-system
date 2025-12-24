@@ -17,10 +17,14 @@ class TeacherAttendanceService {
     String status = 'present',
   }) async {
     try {
-      final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.markAttendance);
+      final url = Uri.parse(
+        ApiConstants.baseUrl + ApiConstants.teacherMarkAttendance,
+      );
 
       final body = <String, dynamic>{"teacher_id": teacherId};
-
+      debugPrint("📤 teacherId: $teacherId");
+      debugPrint("📤 Mark Attendance URL: $url");
+      debugPrint("📤 Mark Attendance Body: ${jsonEncode(body)}");
       final response = await http.post(
         url,
         headers: {
@@ -29,7 +33,7 @@ class TeacherAttendanceService {
         },
         body: jsonEncode(body),
       );
-
+      debugPrint("📥 teacher Mark Attendance Response: ${response.body}");
       final Map<String, dynamic> data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -58,8 +62,8 @@ class TeacherAttendanceService {
           "email": attendance?.email,
 
           // ---- CLASS ----
-          "classId": attendance?.classId,
-          "className": attendance?.className,
+          // "classId": attendance?.classId,
+          // "className": attendance?.className,
 
           // ---- ATTENDANCE ----
           "status": attendance?.status ?? status,
@@ -86,7 +90,7 @@ class TeacherAttendanceService {
     } catch (e, stackTrace) {
       return {
         "success": false,
-        "message": "Network error: ${e.toString()}",
+        "message": "1 Network error: ${e.toString()}",
         "attendanceRecord": null,
         "data": null,
       };
@@ -103,7 +107,9 @@ class TeacherAttendanceService {
     String? classId,
   }) async {
     try {
-      final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.markAttendance);
+      final url = Uri.parse(
+        ApiConstants.baseUrl + ApiConstants.teacherMarkAttendance,
+      );
 
       final body = <String, dynamic>{"teacher_id": teacherId};
 
@@ -123,9 +129,8 @@ class TeacherAttendanceService {
       // debugPrint("📥 Mark Attendance Response: ${response.statusCode}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final attendanceResponse = TeacherAttendanceResponseModel.fromApiResponse(
-          data,
-        );
+        final attendanceResponse =
+            TeacherAttendanceResponseModel.fromApiResponse(data);
         final bool alreadyMarked =
             data["message"]?.toString().toLowerCase().contains('already') ??
             false;
@@ -147,7 +152,7 @@ class TeacherAttendanceService {
       // debugPrint("❌ Mark Attendance Error: $e");
       return AttendanceResult(
         success: false,
-        message: "Network error: ${e.toString()}",
+        message: "2 Network error: ${e.toString()}",
         error: e.toString(),
       );
     }
@@ -206,7 +211,7 @@ class TeacherAttendanceService {
       debugPrint("❌ Bulk Attendance Error: $e");
       return BulkAttendanceResult(
         success: false,
-        message: "Network error: ${e.toString()}",
+        message: "3 Network error: ${e.toString()}",
         error: e.toString(),
       );
     }
@@ -275,7 +280,7 @@ class TeacherAttendanceService {
       debugPrint("❌ Get Today Attendance Error: $e");
       return {
         "success": false,
-        "message": "Network error: $e",
+        "message": "4 Network error: $e",
         "attendance": <TeacherAttendanceModel>[],
         "attendanceRecords": <TeacherAttendanceResponseModel>[],
       };
@@ -426,7 +431,7 @@ class TeacherAttendanceService {
       debugPrint("❌ Get Attendance History Error: $e");
       return AttendanceHistoryResult(
         success: false,
-        message: "Network error: $e",
+        message: "5 Network error: $e",
       );
     }
   }
@@ -505,7 +510,7 @@ class TeacherAttendanceService {
       debugPrint("❌ Get Students For Attendance Error: $e");
       return TeachersForAttendanceResult(
         success: false,
-        message: "Network error: $e",
+        message: "6 Network error: $e",
       );
     }
   }
@@ -561,7 +566,7 @@ class TeacherAttendanceService {
       debugPrint("❌ Get Attendance Stats Error: $e");
       return AttendanceStatsResult(
         success: false,
-        message: "Network error: $e",
+        message: "7 Network error: $e",
       );
     }
   }

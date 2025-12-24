@@ -179,7 +179,7 @@ class TeacherModel {
     String? gender,
     String? firstName,
     String? lastName,
-    String? roleNumber,
+    // String? roleNumber,
     String? email,
     String? mobileCode,
     String? mobileNumber,

@@ -296,9 +296,9 @@ class AttendanceController extends GetxController {
             )
           ).toList();
           
-          debugPrint('✅ Fetched ${result.records.length} history records');
+          // debugPrint('✅ Fetched ${result.records.length} history records');
         } else {
-          debugPrint('❌ ${result.message}');
+          // debugPrint('❌ ${result.message}');
           _loadMockAttendanceHistory();
         }
       
@@ -327,7 +327,7 @@ AttendanceStatus _parseAttendanceStatus(String? status) {
       return AttendanceStatus.excused;
    // If you have this enum value
     default:
-      debugPrint('⚠️ Unknown attendance status: $status, defaulting to absent');
+      // debugPrint('⚠️ Unknown attendance status: $status, defaulting to absent');
       return AttendanceStatus.absent;
   }
 }
@@ -370,14 +370,14 @@ AttendanceStatus _parseAttendanceStatus(String? status) {
         );
       }).toList();
       
-      debugPrint('✅ Fetched ${result.records.length} history records');
+      // debugPrint('✅ Fetched ${result.records.length} history records');
     } else {
-      debugPrint('❌ ${result.message}');
+      // debugPrint('❌ ${result.message}');
       _loadMockAttendanceHistory();
     }
   } catch (e, stackTrace) {
-    debugPrint('❌ Failed to fetch history: $e');
-    debugPrint('📍 StackTrace: $stackTrace');
+    // debugPrint('❌ Failed to fetch history: $e');
+    // debugPrint('📍 StackTrace: $stackTrace');
     _showErrorSnackbar('Failed to fetch history');
     _loadMockAttendanceHistory();
   } finally {
@@ -470,7 +470,7 @@ AttendanceStatus _parseAttendanceStatus(String? status) {
         studentId: studentId,
       );
 
-      debugPrint('📥 Mark Attendance Result: $result');
+      // debugPrint('📥 Mark Attendance Result: $result');
 
       if (result['success'] == true) {
         if (result['alreadyMarked'] == true) {
@@ -491,7 +491,7 @@ AttendanceStatus _parseAttendanceStatus(String? status) {
         return result;
       }
     } catch (e) {
-      debugPrint('❌ Mark Attendance Error: $e');
+      // debugPrint('❌ Mark Attendance Error: $e');
       _showErrorSnackbar('Network error: $e');
       return {'success': false, 'message': e.toString()};
     }
@@ -523,7 +523,7 @@ AttendanceStatus _parseAttendanceStatus(String? status) {
       final status = result['status'] ?? result['data']?['status'] ?? 'present';
       student.attendanceStatus = status;
       
-      debugPrint('✅ ${student.name} marked as $status');
+      // debugPrint('✅ ${student.name} marked as $status');
     }
 
     student.isLoading = false;
@@ -569,7 +569,7 @@ AttendanceStatus _parseAttendanceStatus(String? status) {
           studentId: student.id,
         );
 
-        debugPrint('📥 Response for ${student.name}: $result');
+        // debugPrint('📥 Response for ${student.name}: $result');
 
         if (result['success'] == true) {
           // ✅ Get actual status from response - handle nested data
@@ -611,7 +611,7 @@ AttendanceStatus _parseAttendanceStatus(String? status) {
             checkInTime: result['formattedCheckInTime'] ?? result['checkInTime']?.toString(),
           ));
 
-          debugPrint('✅ ${student.name} → $markedStatus');
+          // debugPrint('✅ ${student.name} → $markedStatus');
         } else {
           failedStudents.add(student);
           results.add(AttendanceResultItem(
@@ -622,7 +622,7 @@ AttendanceStatus _parseAttendanceStatus(String? status) {
             error: result['message'] ?? 'Unknown error',
           ));
           
-          debugPrint('❌ ${student.name} → Failed: ${result['message']}');
+          // debugPrint('❌ ${student.name} → Failed: ${result['message']}');
         }
       } catch (e) {
         failedStudents.add(student);
@@ -634,7 +634,7 @@ AttendanceStatus _parseAttendanceStatus(String? status) {
           error: e.toString(),
         ));
         
-        debugPrint('❌ Error for ${student.name}: $e');
+        // debugPrint('❌ Error for ${student.name}: $e');
       }
 
       // Small delay to prevent rate limiting
@@ -805,7 +805,7 @@ AttendanceStatus _parseAttendanceStatus(String? status) {
         }
       } catch (e) {
         failedStudents.add(student);
-        debugPrint('❌ Retry error for ${student.name}: $e');
+        // debugPrint('❌ Retry error for ${student.name}: $e');
       }
 
       await Future.delayed(const Duration(milliseconds: 100));

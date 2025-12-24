@@ -10,7 +10,7 @@ import '../services/teacher_attendance_service.dart';
 import '../services/storage_service.dart';
 import '../services/teacher_service.dart';
 import '../app/theme/app_theme.dart';
-import '../app/utils/qr_helper.dart';
+import '../app/utils/teacher_qr_helper.dart';
 
 class TeacherQrScannerController extends GetxController {
   // ══════════════════════════════════════════════════════════
@@ -59,7 +59,7 @@ class TeacherQrScannerController extends GetxController {
   // GETTERS
   // ══════════════════════════════════════════════════════════
   String? get _authToken => _storageService.getToken();
-  // bool get isAuthenticated => _authToken != null && _authToken!.isNotEmpty;
+  bool get isAuthenticated => _authToken != null && _authToken!.isNotEmpty;
 
   int get presentCount => scannedTeachers.length;
   int get totalTeachers => allTeachers.length;
@@ -324,7 +324,7 @@ class TeacherQrScannerController extends GetxController {
 
     try {
       // ✅ Parse QR code data using helper
-      final qrData = QRHelper.parseQRCode(code);
+      final qrData = TeacherQRHelper.parseQRCode(code);
       // debugPrint('Scanned QR Data: $qrData');
 
       if (qrData == null) {
@@ -380,7 +380,9 @@ class TeacherQrScannerController extends GetxController {
     String? attendanceId;
     DateTime? checkInTime;
     DateTime? checkOutTime;
-    String action = 'check_in'; // default
+    String action = 'check_in';
+    bool shouldSaveLocally = true;
+    bool messageShown = false;
 
     try {
       final result = await TeacherAttendanceService.markAttendance(
@@ -389,25 +391,18 @@ class TeacherQrScannerController extends GetxController {
 
       final bool success = result['success'] == true;
       action = result['action'] ?? 'check_in';
+      final data = result['data'] as Map<String, dynamic>?;
 
       if (success) {
         serverSuccess = true;
 
-        // status can be at the root or in data
-        markedStatus =
-            result['status'] ?? result['data']?['status'] ?? 'present';
+        // Extract data from nested 'data' object
+        markedStatus = data?['status'] ?? 'present';
+        attendanceId = data?['_id'];
 
-        // attendance id
-        attendanceId =
-            result['attendanceId'] ??
-            result['data']?['_id'] ??
-            result['data']?['attendance_id'];
-
-        // times
-        final checkInTimeStr =
-            result['checkInTime'] ?? result['data']?['check_in_time'];
-        final checkOutTimeStr =
-            result['checkOutTime'] ?? result['data']?['check_out_time'];
+        // Parse times (API uses snake_case)
+        final checkInTimeStr = data?['check_in_time'];
+        final checkOutTimeStr = data?['check_out_time'];
 
         if (checkInTimeStr != null) {
           checkInTime = DateTime.tryParse(checkInTimeStr);
@@ -416,72 +411,68 @@ class TeacherQrScannerController extends GetxController {
           checkOutTime = DateTime.tryParse(checkOutTimeStr);
         }
 
-        // Handle specific actions from backend
-        if (action == 'check_in') {
-          // normal first scan
-          _showAttendanceSuccess(
-            teacher.name,
-            markedStatus,
-            serverSuccess,
-            action: 'check_in',
-          );
-        } else if (action == 'check_out') {
-          // successful checkout
-          _showAttendanceSuccess(
-            teacher.name,
-            markedStatus,
-            serverSuccess,
-            action: 'check_out',
-          );
-        } else if (action == 'already_checked_out') {
-          _showWarning(
-            'Already Checked Out',
-            '${teacher.name} is already checked out for today.',
-          );
-          // Optionally, still record locally or just return
-          return;
-        } else if (action == 'too_early_for_checkout') {
-          _showWarning(
-            'Too Early',
-            result['message'] ?? 'Cannot checkout yet.',
-          );
-          return;
-        } else {
-          // fallback
-          _showAttendanceSuccess(
-            teacher.name,
-            markedStatus,
-            serverSuccess,
-            action: action,
-          );
+        // Handle specific actions
+        switch (action) {
+          case 'check_in':
+          case 'check_out':
+            _showAttendanceSuccess(
+              teacher.name,
+              markedStatus,
+              serverSuccess,
+              action: action,
+            );
+            messageShown = true;
+            break;
+
+          case 'already_checked_out':
+            _showWarning(
+              'Already Checked Out',
+              '${teacher.name} is already checked out for today.',
+            );
+            shouldSaveLocally = false; // Don't duplicate local record
+            return;
+
+          case 'too_early_for_checkout':
+            _showWarning(
+              'Too Early',
+              result['message'] ?? 'Cannot checkout yet.',
+            );
+            shouldSaveLocally = false;
+            return;
+
+          default:
+            _showAttendanceSuccess(
+              teacher.name,
+              markedStatus,
+              serverSuccess,
+              action: action,
+            );
+            messageShown = true;
         }
       } else {
-        // Handle non-success from server
+        // Server returned success: false
         if (result['alreadyMarked'] == true) {
-          // Old behavior if your backend still uses this flag somewhere
           _showWarning('Already Marked', '${teacher.name} was already marked.');
           return;
         }
 
-        // Some error from server
         _showWarning(
           'Error',
           result['message'] ?? 'Failed to mark attendance.',
         );
-        // You can decide whether to still add locally or not
+        messageShown = true;
+        // Continue to save locally as offline backup
       }
     } catch (e) {
-      // API Error (network, etc.)
-      _showWarning('Network Error', 'Could not reach server. Saved locally.');
-      // You keep serverSuccess = false and fall through to local save
+      _showWarning('Network Error', 'Saving offline: ${e.toString()}');
+      messageShown = true;
+      // Continue to save locally
     }
 
     // -------------------------
     // CREATE LOCAL RECORD
     // -------------------------
-
-    // For check-out, you might want different handling, but
-    // here I always create/update a local attendance record.
+    if (!shouldSaveLocally) return;
 
     final updatedTeacher = teacher.copyWith(
       isPresent: true,
@@ -495,36 +486,26 @@ class TeacherQrScannerController extends GetxController {
       id: attendanceId ?? 'LOCAL_${DateTime.now().millisecondsSinceEpoch}',
       teacherId: teacher.id,
       teacherName: teacher.name,
-      // teacherRollNumber: teacher.rollNumber,
-      // teacherClassName: teacher.className,
-      // teacherSection: teacher.section,
       date: DateTime.now(),
       status: AttendanceStatusExtension.fromString(markedStatus),
       checkInTime: checkInTime ?? DateTime.now(),
-      checkOutTime: checkOutTime, // make sure your model has this field
+      checkOutTime: checkOutTime,
       scannedBy: _storageService.getUser()?.id,
       scannedByName: _storageService.getUser()?.name ?? 'QR Scanner',
       createdAt: DateTime.now(),
+      // isSynced: serverSuccess, // Track if synced to server
     );
 
     todayAttendance.add(attendance);
 
-    // Update list of all teachers
+    // Update allTeachers list
     final index = allTeachers.indexWhere((s) => s.id == teacher.id);
     if (index != -1) {
       allTeachers[index] = updatedTeacher;
     }
 
-    // If we didn’t already show a message above based on action,
-    // show a generic success here (can be removed if redundant).
-    if (serverSuccess && (action != 'check_in' && action != 'check_out')) {
-      _showAttendanceSuccess(
-        teacher.name,
-        markedStatus,
-        serverSuccess,
-        action: action,
-      );
-    } else if (!serverSuccess) {
+    // Only show message if not already shown
+    if (!messageShown) {
       _showAttendanceSuccess(
         teacher.name,
         markedStatus,
@@ -534,46 +515,217 @@ class TeacherQrScannerController extends GetxController {
     }
   }
 
+  // Future<void> markAttendance(TeacherModel teacher) async {
+  //   _vibrate();
+
+  //   bool serverSuccess = false;
+  //   String markedStatus = 'present';
+  //   String? attendanceId;
+  //   DateTime? checkInTime;
+  //   DateTime? checkOutTime;
+  //   String action = 'check_in'; // default
+
+  //   try {
+  //     final result = await TeacherAttendanceService.markAttendance(
+  //       teacherId: teacher.id,
+  //     );
+
+  //     final bool success = result['success'] == true;
+  //     action = result['action'] ?? 'check_in';
+
+  //     if (success) {
+  //       serverSuccess = true;
+
+  //       // status can be at the root or in data
+  //       markedStatus =
+  //           result['status'] ?? result['data']?['status'] ?? 'present';
+
+  //       // attendance id
+  //       attendanceId =
+  //           result['attendanceId'] ??
+  //           result['data']?['_id'] ??
+  //           result['data']?['attendance_id'];
+
+  //       // times
+  //       final checkInTimeStr =
+  //           result['checkInTime'] ?? result['data']?['check_in_time'];
+  //       final checkOutTimeStr =
+  //           result['checkOutTime'] ?? result['data']?['check_out_time'];
+
+  //       if (checkInTimeStr != null) {
+  //         checkInTime = DateTime.tryParse(checkInTimeStr);
+  //       }
+  //       if (checkOutTimeStr != null) {
+  //         checkOutTime = DateTime.tryParse(checkOutTimeStr);
+  //       }
+
+  //       // Handle specific actions from backend
+  //       if (action == 'check_in') {
+  //         // normal first scan
+  //         _showAttendanceSuccess(
+  //           teacher.name,
+  //           markedStatus,
+  //           serverSuccess,
+  //           action: 'check_in',
+  //         );
+  //       } else if (action == 'check_out') {
+  //         // successful checkout
+  //         _showAttendanceSuccess(
+  //           teacher.name,
+  //           markedStatus,
+  //           serverSuccess,
+  //           action: 'check_out',
+  //         );
+  //       } else if (action == 'already_checked_out') {
+  //         _showWarning(
+  //           'Already Checked Out',
+  //           '${teacher.name} is already checked out for today.',
+  //         );
+  //         // Optionally, still record locally or just return
+  //         return;
+  //       } else if (action == 'too_early_for_checkout') {
+  //         _showWarning(
+  //           'Too Early',
+  //           result['message'] ?? 'Cannot checkout yet.',
+  //         );
+  //         return;
+  //       } else {
+  //         // fallback
+  //         _showAttendanceSuccess(
+  //           teacher.name,
+  //           markedStatus,
+  //           serverSuccess,
+  //           action: action,
+  //         );
+  //       }
+  //     } else {
+  //       // Handle non-success from server
+  //       if (result['alreadyMarked'] == true) {
+  //         // Old behavior if your backend still uses this flag somewhere
+  //         _showWarning('Already Marked', '${teacher.name} was already marked.');
+  //         return;
+  //       }
+
+  //       // Some error from server
+  //       _showWarning(
+  //         'Error',
+  //         result['message'] ?? 'Failed to mark attendance.',
+  //       );
+  //       // You can decide whether to still add locally or not
+  //     }
+  //   } catch (e) {
+  //     // API Error (network, etc.)
+  //     _showWarning('Teacher Network Error',e.toString());
+  //     // You keep serverSuccess = false and fall through to local save
+  //   }
+
+  //   // -------------------------
+  //   // CREATE LOCAL RECORD
+  //   // -------------------------
+
+  //   // For check-out, you might want different handling, but
+  //   // here I always create/update a local attendance record.
+
+  //   final updatedTeacher = teacher.copyWith(
+  //     isPresent: true,
+  //     isMarkedOnServer: serverSuccess,
+  //     attendanceStatus: markedStatus,
+  //   );
+
+  //   scannedTeachers.add(updatedTeacher);
+
+  //   final attendance = TeacherAttendanceModel(
+  //     id: attendanceId ?? 'LOCAL_${DateTime.now().millisecondsSinceEpoch}',
+  //     teacherId: teacher.id,
+  //     teacherName: teacher.name,
+  //     // teacherRollNumber: teacher.rollNumber,
+  //     // teacherClassName: teacher.className,
+  //     // teacherSection: teacher.section,
+  //     date: DateTime.now(),
+  //     status: AttendanceStatusExtension.fromString(markedStatus),
+  //     checkInTime: checkInTime ?? DateTime.now(),
+  //     checkOutTime: checkOutTime, // make sure your model has this field
+  //     scannedBy: _storageService.getUser()?.id,
+  //     scannedByName: _storageService.getUser()?.name ?? 'QR Scanner',
+  //     createdAt: DateTime.now(),
+  //   );
+
+  //   todayAttendance.add(attendance);
+
+  //   // Update list of all teachers
+  //   final index = allTeachers.indexWhere((s) => s.id == teacher.id);
+  //   if (index != -1) {
+  //     allTeachers[index] = updatedTeacher;
+  //   }
+
+  //   // If we didn’t already show a message above based on action,
+  //   // show a generic success here (can be removed if redundant).
+  //   if (serverSuccess && (action != 'check_in' && action != 'check_out')) {
+  //     _showAttendanceSuccess(
+  //       teacher.name,
+  //       markedStatus,
+  //       serverSuccess,
+  //       action: action,
+  //     );
+  //   } else if (!serverSuccess) {
+  //     _showAttendanceSuccess(
+  //       teacher.name,
+  //       markedStatus,
+  //       serverSuccess,
+  //       action: action,
+  //     );
+  //   }
+  // }
+
   void _showAttendanceSuccess(
     String teacherName,
     String status,
     bool synced, {
     String action = 'check_in',
   }) {
+    final normalizedAction = action.trim().toLowerCase();
+    final normalizedStatus = status.trim().toLowerCase();
     String title;
     String message;
     Color bgColor;
+    IconData icon;
 
-    if (action == 'check_out') {
-      // CHECK-OUT UI
+    if (normalizedAction == 'check_out') {
       title = '✓ Checkout';
-      // message = '$teacherName checked out successfully';
+      message = '$teacherName checked out successfully';
       bgColor = Colors.purple;
-    } else {
-      // CHECK-IN or others
-      if (status == 'late') {
+      icon = Icons.exit_to_app;
+    }
+    // -----------------------------
+    // CHECK-IN
+    // -----------------------------
+    else {
+      if (normalizedStatus == 'late') {
         title = '⏰ Late';
         message = '$teacherName marked as LATE';
         bgColor = Colors.orange;
-      } else if (status == 'present') {
+        icon = Icons.access_time;
+      } else if (normalizedStatus == 'present') {
         title = '✓ Present';
         message = '$teacherName marked present';
         bgColor = Colors.green;
+        icon = Icons.check_circle;
       } else {
         title = '✓ Marked';
-        message = '$teacherName marked as ${status.toUpperCase()}';
+        message = '$teacherName marked as ${normalizedStatus.toUpperCase()}';
         bgColor = Colors.blue;
+        icon = Icons.info;
       }
     }
 
-    // if (!synced) {
-    //   message += ' (pending sync)';
-    //   bgColor = Colors.blue;
-    // }
+    if (!synced) {
+      message += ' (pending sync)';
+      bgColor = Colors.blue;
+    }
 
     Get.snackbar(
       title,
-      "message",
+      message,
       snackPosition: SnackPosition.TOP,
       backgroundColor: bgColor,
       colorText: Colors.white,

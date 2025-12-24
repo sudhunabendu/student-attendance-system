@@ -132,14 +132,14 @@ class AuthController extends GetxController {
       final mobileNumber = mobileController.text.trim();
       final password = passwordController.text;
 
-      debugPrint('📤 Attempting login with mobile: $mobileNumber');
+      // debugPrint('📤 Attempting login with mobile: $mobileNumber');
 
       final response = await _authService.login(
         mobileNumber: mobileNumber,
         password: password,
       );
 
-      debugPrint('📥 Login response: ${response.isSuccess}');
+      // debugPrint('📥 Login response: ${response.isSuccess}');
 
       if (response.isSuccess && response.user != null) {
         // ✅ Save user data to storage ONLY after successful login
@@ -173,7 +173,7 @@ class AuthController extends GetxController {
         );
       }
     } catch (e) {
-      debugPrint('❌ Login error: $e');
+      // debugPrint('❌ Login error: $e');
       _showErrorSnackbar(
         'Error',
         'Something went wrong. Please try again.',
@@ -193,7 +193,7 @@ class AuthController extends GetxController {
     }
     await _storageService.setLoggedIn(true);
     
-    debugPrint('✓ User session saved');
+    // debugPrint('✓ User session saved');
   }
 
   // ══════════════════════════════════════════════════════════
@@ -251,7 +251,7 @@ class AuthController extends GetxController {
 
       _showSuccessSnackbar('Logged Out', 'You have been logged out successfully');
     } catch (e) {
-      debugPrint('❌ Logout error: $e');
+      // debugPrint('❌ Logout error: $e');
       _showErrorSnackbar('Error', 'Failed to logout. Please try again.');
     }
   }

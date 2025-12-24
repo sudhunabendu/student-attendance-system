@@ -169,13 +169,13 @@ class StudentController extends GetxController {
         final List<dynamic> classList = result['classes'] ?? [];
         classes.value = classList.map((c) => ClassModel.fromJson(c)).toList();
         classOptions.value = ['All', ...classes.map((c) => c.name)];
-        debugPrint('✅ Loaded ${classes.length} classes');
+        // debugPrint('✅ Loaded ${classes.length} classes');
       } else {
-        debugPrint('❌ Failed to load classes: ${result['message']}');
+        // debugPrint('❌ Failed to load classes: ${result['message']}');
         _loadMockClasses();
       }
     } catch (e) {
-      debugPrint('❌ Error fetching classes: $e');
+      // debugPrint('❌ Error fetching classes: $e');
       _loadMockClasses();
     }
   }
@@ -242,7 +242,7 @@ class StudentController extends GetxController {
         _loadMockStudents();
       }
     } catch (e) {
-      debugPrint('Error fetching students: $e');
+      // debugPrint('Error fetching students: $e');
       // On error, load mock data
       _loadMockStudents();
     } finally {
@@ -386,7 +386,7 @@ class StudentController extends GetxController {
       }
       return null;
     } catch (e) {
-      debugPrint('Error fetching student: $e');
+      // debugPrint('Error fetching student: $e');
       return null;
     }
   }
@@ -420,7 +420,7 @@ class StudentController extends GetxController {
         _loadMockAttendance();
       }
     } catch (e) {
-      debugPrint('Error fetching attendance: $e');
+      // debugPrint('Error fetching attendance: $e');
       _loadMockAttendance();
     }
   }

@@ -388,7 +388,7 @@ class QRScannerController extends GetxController {
 
       final bool success = result['success'] == true;
       action = result['action'] ?? 'check_in';
-      debugPrint('action: $action');
+      // debugPrint('action: $action');
       if (success) {
         serverSuccess = true;
 
@@ -471,7 +471,7 @@ class QRScannerController extends GetxController {
         // You can decide whether to still add locally or not
       }
     } catch (e, stack) {
-      debugPrint('Attendance error: $e');
+      // debugPrint('Attendance error: $e');
       debugPrintStack(stackTrace: stack);
       // API Error (network, etc.)
       // _showWarning('Network Error', 'Could not reach server. Saved locally.');
