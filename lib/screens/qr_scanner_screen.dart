@@ -129,7 +129,7 @@ class QRScannerScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
+                                color: Colors.black.withValues(alpha: 0.3),
                                 blurRadius: 10,
                               ),
                             ],
@@ -341,9 +341,9 @@ class QRScannerScreen extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.successColor.withOpacity(0.1),
+          color: AppTheme.successColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
+          border: Border.all(color: AppTheme.successColor.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [

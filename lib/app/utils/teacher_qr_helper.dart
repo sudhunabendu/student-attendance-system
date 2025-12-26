@@ -67,7 +67,7 @@ class TeacherQRHelper {
         'isValid': true,
       };
     } catch (e) {
-      print('QR parse error: $e');
+      // print('QR parse error: $e');
       return null;
     }
   }

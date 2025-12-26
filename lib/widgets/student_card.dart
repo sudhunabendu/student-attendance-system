@@ -245,17 +245,17 @@ class StudentCard extends StatelessWidget {
         vertical: compact ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: isSelected ? AppTheme.primaryColor.withOpacity(0.05) : Colors.white,
+        color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.5) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isSelected 
-              ? AppTheme.primaryColor.withOpacity(0.3) 
+              ? AppTheme.primaryColor.withValues(alpha: 0.3) 
               : Colors.grey.shade200,
           width: isSelected ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -412,7 +412,7 @@ class StudentCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            avatarColor.withOpacity(0.8),
+            avatarColor.withValues(alpha: 0.8),
             avatarColor,
           ],
           begin: Alignment.topLeft,
@@ -421,7 +421,7 @@ class StudentCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 10 : 12),
         boxShadow: [
           BoxShadow(
-            color: avatarColor.withOpacity(0.3),
+            color: avatarColor.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -446,8 +446,8 @@ class StudentCard extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: isMale 
-            ? AppTheme.maleColor.withOpacity(0.1) 
-            : AppTheme.femaleColor.withOpacity(0.1),
+            ? AppTheme.maleColor.withValues(alpha: 0.1) 
+            : AppTheme.femaleColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Icon(
@@ -487,7 +487,7 @@ class StudentCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: badgeColor.withOpacity(0.1),
+            color: badgeColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Row(

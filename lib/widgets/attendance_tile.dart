@@ -53,7 +53,7 @@ class AttendanceTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: _getStatusColor().withOpacity(0.1),
+          backgroundColor: _getStatusColor().withValues(alpha: 0.1),
           child: Icon(
             _getStatusIcon(),
             color: _getStatusColor(),
@@ -68,7 +68,7 @@ class AttendanceTile extends StatelessWidget {
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: _getStatusColor().withOpacity(0.1),
+            color: _getStatusColor().withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(

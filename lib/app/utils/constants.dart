@@ -25,6 +25,9 @@ class ApiConstants {
   static const String getTeacherAttendance = '/auth/attendance';
   static const String markBulkAttendance = '/auth/mark-bulk-attendance';
   static const String teacherMarkAttendance = '/auth/teacher-mark-attendance';
+
+  // Notice Endpoints
+  static const String getNotices = '/auth/notice';
   // Student Endpoints
   static const String getStudents = '/auth/students';
   static const String getTeachers = '/auth/teachers';

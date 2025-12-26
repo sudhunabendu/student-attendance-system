@@ -132,7 +132,7 @@ class ReportsScreen extends StatelessWidget {
                   5,
                   (index) => ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
                       child: Text(
                         '${index + 1}',
                         style: const TextStyle(

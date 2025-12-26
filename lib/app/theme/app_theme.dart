@@ -12,7 +12,6 @@
 //   static const Color accentColor = Color(0xFFF59E0B);
 //   static const Color surfaceColor = Colors.white;
 
-  
 //   // Text Colors
 //   static const Color textPrimary = Color(0xFF1E293B);
 //   static const Color textSecondary = Color(0xFF64748B);
@@ -25,9 +24,8 @@
 //   static const Color maleColor = Color(0xFF3B82F6);
 //   static const Color femaleColor = Color(0xFFEC4899);
 
-
 //   static ThemeData lightTheme = ThemeData(
-//     primaryColor: primaryColor, 
+//     primaryColor: primaryColor,
 //     scaffoldBackgroundColor: backgroundColor,
 //     colorScheme: ColorScheme.light(
 //       primary: primaryColor,
@@ -189,7 +187,7 @@ class AppTheme {
   // ══════════════════════════════════════════════════════════
   static List<BoxShadow> get cardShadow => [
     BoxShadow(
-      color: Colors.black.withOpacity(0.05),
+      color: Colors.black.withValues(alpha: 0.5),
       blurRadius: 10,
       offset: const Offset(0, 4),
     ),
@@ -197,7 +195,7 @@ class AppTheme {
 
   static List<BoxShadow> get softShadow => [
     BoxShadow(
-      color: Colors.black.withOpacity(0.03),
+      color: Colors.black.withValues(alpha: 0.3),
       blurRadius: 8,
       offset: const Offset(0, 2),
     ),
@@ -205,7 +203,7 @@ class AppTheme {
 
   static List<BoxShadow> elevatedShadow(Color color) => [
     BoxShadow(
-      color: color.withOpacity(0.3),
+      color: color.withValues(alpha: 0.3),
       blurRadius: 12,
       offset: const Offset(0, 4),
     ),
@@ -337,7 +335,7 @@ class AppTheme {
     brightness: Brightness.light,
     primaryColor: primaryColor,
     scaffoldBackgroundColor: backgroundColor,
-    
+
     // Color Scheme
     colorScheme: const ColorScheme.light(
       primary: primaryColor,
@@ -378,7 +376,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: cardColor,
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusMD),
       ),
@@ -394,7 +392,7 @@ class AppTheme {
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         elevation: 2,
-        shadowColor: primaryColor.withOpacity(0.3),
+        shadowColor: primaryColor.withValues(alpha: 0.3),
         padding: const EdgeInsets.symmetric(
           horizontal: spacingXXL,
           vertical: spacingMD,
@@ -488,7 +486,7 @@ class AppTheme {
     // Chip Theme
     chipTheme: ChipThemeData(
       backgroundColor: Colors.grey.shade100,
-      selectedColor: primaryColor.withOpacity(0.15),
+      selectedColor: primaryColor.withValues(alpha: 0.15),
       disabledColor: Colors.grey.shade200,
       labelStyle: const TextStyle(color: textPrimary, fontSize: fontSM),
       secondaryLabelStyle: const TextStyle(color: Colors.white),
@@ -503,9 +501,7 @@ class AppTheme {
       backgroundColor: Colors.white,
       elevation: 10,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(radiusXXL),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(radiusXXL)),
       ),
     ),
 
@@ -580,10 +576,7 @@ class AppTheme {
     ),
 
     // Icon Theme
-    iconTheme: const IconThemeData(
-      color: textSecondary,
-      size: 24,
-    ),
+    iconTheme: const IconThemeData(color: textSecondary, size: 24),
 
     // Progress Indicator Theme
     progressIndicatorTheme: const ProgressIndicatorThemeData(
@@ -594,15 +587,15 @@ class AppTheme {
 
     // Switch Theme
     switchTheme: SwitchThemeData(
-      thumbColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
           return primaryColor;
         }
         return Colors.grey.shade400;
       }),
-      trackColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
-          return primaryColor.withOpacity(0.5);
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return primaryColor.withValues(alpha: 0.5);
         }
         return Colors.grey.shade300;
       }),
@@ -610,13 +603,13 @@ class AppTheme {
 
     // Checkbox Theme
     checkboxTheme: CheckboxThemeData(
-      fillColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
+      fillColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
           return primaryColor;
         }
         return Colors.transparent;
       }),
-      checkColor: MaterialStateProperty.all(Colors.white),
+      checkColor: WidgetStateProperty.all(Colors.white),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusXS),
       ),
@@ -624,8 +617,8 @@ class AppTheme {
 
     // Radio Theme
     radioTheme: RadioThemeData(
-      fillColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
+      fillColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
           return primaryColor;
         }
         return Colors.grey.shade400;
@@ -682,7 +675,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: cardDarkColor,
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.3),
+      shadowColor: Colors.black.withValues(alpha: 0.3),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusMD),
       ),
@@ -732,9 +725,7 @@ class AppTheme {
       backgroundColor: cardDarkColor,
       elevation: 10,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(radiusXXL),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(radiusXXL)),
       ),
     ),
 
@@ -754,10 +745,7 @@ class AppTheme {
     ),
 
     // Icon Theme
-    iconTheme: const IconThemeData(
-      color: Colors.white70,
-      size: 24,
-    ),
+    iconTheme: const IconThemeData(color: Colors.white70, size: 24),
 
     // Progress Indicator Theme
     progressIndicatorTheme: const ProgressIndicatorThemeData(
@@ -769,7 +757,7 @@ class AppTheme {
   // ══════════════════════════════════════════════════════════
   // HELPER METHODS
   // ══════════════════════════════════════════════════════════
-  
+
   /// Get color based on status
   static Color getStatusColor(String status) {
     switch (status.toLowerCase()) {
