@@ -33,12 +33,16 @@ import 'package:get_storage/get_storage.dart';
 import 'app/routes/app_routes.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/theme/app_theme.dart';
+import 'controllers/theme_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize GetStorage
   await GetStorage.init();
+
+  // ✅ Initialize Theme Controller
+  Get.put(ThemeController(), permanent: true);
   
   runApp(const MyApp());
 }
@@ -48,12 +52,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the theme controller
+    final themeController = Get.find<ThemeController>();
     return GetMaterialApp(
       title: 'Attendance System',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
+      // themeMode: ThemeMode.light,
+      themeMode: themeController.themeMode,
       initialBinding: InitialBinding(),
       initialRoute: AppRoutes.splash,
       getPages: AppRoutes.routes,
